@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#6d5dfc">
+<link rel="manifest" href="manifest.json">
+<title>Study Progress</title>
+<style>
+:root{
+ --bg:#f6f7fb;--card:#fff;--ink:#182033;--muted:#788197;--line:#e7eaf1;
+ --purple:#6d5dfc;--purple2:#8b7fff;--blue:#4f8cff;--mint:#20c997;
+ --orange:#ff9f43;--pink:#ef5da8;--danger:#e85d75;--shadow:0 10px 30px rgba(28,35,64,.07)
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select{font:inherit}button{cursor:pointer}.app{max-width:1120px;margin:auto;padding:18px 18px 42px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:4px 0 20px}
+.brand{display:flex;align-items:center;gap:11px}.logo{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--purple),var(--blue));display:grid;place-items:center;color:#fff;font-weight:900;font-size:21px;box-shadow:0 9px 20px #6d5dfc30}.brand h1{margin:0;font-size:21px}.brand small{color:var(--muted)}
+.top-actions{display:flex;gap:8px;align-items:center}.btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:10px 13px;border-radius:12px;font-weight:750}.btn:hover{transform:translateY(-1px)}.primary{background:var(--purple);color:#fff;border-color:var(--purple)}.danger{color:var(--danger)}
+.tabs{display:flex;gap:6px;overflow:auto;margin-bottom:14px}.tab{border:0;background:transparent;color:var(--muted);padding:10px 14px;border-radius:11px;font-weight:800}.tab.active{background:#ebe9ff;color:#5b4dd7}
+.page{display:none}.page.active{display:block}
+.grid{display:grid;grid-template-columns:1.55fr 1fr 1fr;gap:14px}.grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:21px;padding:18px;box-shadow:var(--shadow)}
+.hero{background:linear-gradient(135deg,#1c1d43,#352d79);color:#fff;border:0;min-height:220px}.hero-row{display:flex;justify-content:space-between;align-items:center;gap:20px}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:#c9cbea}.hero h2{font-size:31px;line-height:1.05;margin:8px 0}.hero p{color:#d8d9ec;max-width:510px}.hero .btn{background:#fff;border-color:#fff}
+.ring{width:120px;height:120px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#fff var(--p,0%),#ffffff20 0);flex:none}.ring-inner{width:96px;height:96px;border-radius:50%;background:#252451;display:grid;place-items:center;text-align:center}.ring b{font-size:23px;display:block}.ring span{font-size:11px;color:#d4d5e9}
+.section-title{font-size:17px;font-weight:900}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.muted{color:var(--muted);font-size:13px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px}.stat{background:#f5f6fa;border-radius:15px;padding:12px}.stat b{display:block;font-size:22px}.stat span{font-size:12px;color:var(--muted)}
+.progress{height:9px;background:#e9ebf2;border-radius:99px;overflow:hidden}.progress>div{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--purple),var(--blue))}
+.task{display:flex;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid var(--line)}.task:last-child{border-bottom:0}.task input{width:20px;height:20px;accent-color:var(--purple)}.task-main{flex:1;min-width:0}.task-name{font-weight:800}.done .task-name{text-decoration:line-through;color:#9ba2b1}.tag{display:inline-block;font-size:11px;padding:5px 8px;border-radius:99px;background:#efedff;color:#5c50d3;margin-top:4px}.task-actions{display:flex;gap:6px}.mini{padding:7px 9px;font-size:12px}
+.subjects{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.subject{border-radius:16px;padding:14px;color:#fff;min-height:85px}.s1{background:linear-gradient(135deg,#6d5dfc,#9288ff)}.s2{background:linear-gradient(135deg,#ff8b4d,#ffb25d)}.s3{background:linear-gradient(135deg,#18b887,#4ed7b2)}.s4{background:linear-gradient(135deg,#4f8cff,#79b5ff)}.subject small{display:block;margin-top:5px;opacity:.88}
+.timer-card{background:linear-gradient(135deg,#eef0ff,#fff)}.timer{font-size:54px;line-height:1;font-weight:950;text-align:center;letter-spacing:-.04em;margin:18px 0 10px}.timer-state{text-align:center;color:#6358d8;font-weight:850;font-size:13px}.timer-controls{display:flex;justify-content:center;gap:8px}.timer-presets{display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap}.preset{font-size:12px;padding:7px 9px;border-radius:10px;background:#fff;border:1px solid var(--line)}.preset.active{background:#ebe9ff;border-color:#cfcaff;color:#5b4dd7}
+.week{height:190px;display:flex;align-items:flex-end;gap:10px;padding:12px 3px 22px}.barwrap{height:100%;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px}.wbar{width:100%;max-width:46px;border-radius:9px 9px 4px 4px;background:linear-gradient(180deg,var(--purple),var(--blue));min-height:5px}.day,.hourslabel{font-size:11px;color:var(--muted)}.hourslabel{color:var(--ink);font-weight:800}
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric{padding:14px;background:#f5f6fa;border-radius:15px}.metric b{font-size:22px;display:block}
+.plan-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.plan-item:last-child{border:0}.plan-num{width:30px;height:30px;border-radius:10px;background:#efedff;color:#5b50d7;display:grid;place-items:center;font-weight:900;flex:none}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.field label{display:block;font-size:12px;font-weight:800;margin-bottom:5px;color:#5f687d}.field input,.field select{width:100%;border:1px solid var(--line);background:#fff;padding:11px;border-radius:11px;outline:none}.field input:focus,.field select:focus{border-color:#b8b1ff;box-shadow:0 0 0 3px #6d5dfc14}
+.modal{position:fixed;inset:0;background:#11152a7a;display:none;align-items:center;justify-content:center;padding:16px;z-index:20}.modal.show{display:flex}.sheet{background:#fff;width:min(560px,100%);max-height:90vh;overflow:auto;border-radius:22px;padding:20px;box-shadow:0 30px 80px #11152a40}.sheet h3{margin:0}.sheet .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}.notice{padding:11px 13px;border-radius:12px;background:#f5f6fa;color:#5f687d;font-size:13px}
+.empty{padding:22px 4px;text-align:center;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;background:#182033;color:#fff;padding:11px 15px;border-radius:12px;transition:.2s;z-index:50;font-size:13px}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:900px){.grid{grid-template-columns:1fr 1fr}.hero{grid-column:1/-1}.grid2{grid-template-columns:1fr}.metric-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:620px){.app{padding:12px}.grid{grid-template-columns:1fr}.hero{min-height:240px}.hero-row{align-items:flex-start}.ring{width:92px;height:92px}.ring-inner{width:72px;height:72px}.ring b{font-size:18px}.hero h2{font-size:27px}.stats{grid-template-columns:repeat(3,1fr)}.subjects{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.top-actions .btn:first-child{display:none}}
+
+/* Ultimate upgrade */
+.smart-box{background:linear-gradient(135deg,#f0efff,#f7fbff);border:1px solid #dedaff;border-radius:18px;padding:15px;margin-top:12px}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}.chip{padding:6px 9px;border-radius:99px;background:#f0efff;color:#5b50d3;font-size:11px;font-weight:800}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:12px}.calhead{font-size:10px;color:var(--muted);text-align:center;font-weight:800}.calday{min-height:48px;border:1px solid var(--line);border-radius:10px;padding:6px;font-size:11px;background:#fff}.calday b{display:block}.calday .dot{font-size:9px;color:var(--purple);font-weight:900}.calday.today{border-color:#a59dff;background:#f4f2ff}.calday.exam{box-shadow:inset 0 0 0 2px #ffb25d}
+.syllabus-row{padding:11px 0;border-bottom:1px solid var(--line)}.syllabus-row:last-child{border-bottom:0}.chapter{display:flex;gap:8px;align-items:center}.chapter input{accent-color:var(--purple)}
+.pill{font-size:10px;padding:4px 7px;border-radius:99px;background:#f1f2f6;color:#687186;font-weight:800}
+.quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.quick{padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff}.quick b{display:block}.quick small{color:var(--muted)}
+.calendar-wrap{overflow:auto}
+@media(max-width:620px){.quick-grid{grid-template-columns:1fr 1fr}.calendar{min-width:560px}.calday{min-height:58px;padding:8px}.calhead{font-size:11px}}
+
+
+/* Study Progress — Dark Mode Upgrade */
+body.dark{
+ --bg:#0b1020;
+ --card:#121a2b;
+ --ink:#f4f7ff;
+ --muted:#9aa6bd;
+ --line:#26324a;
+ --shadow:0 12px 34px rgba(0,0,0,.32);
+}
+body.dark .btn{background:#172136;color:var(--ink);border-color:#2a3853}
+body.dark .primary{background:var(--purple);color:#fff;border-color:var(--purple)}
+body.dark .tab{color:#9aa6bd}
+body.dark .tab.active{background:#29234f;color:#c9c3ff}
+body.dark input,body.dark select,body.dark textarea{
+ background:#0f1728!important;color:var(--ink)!important;border-color:#2a3853!important;
+}
+body.dark input::placeholder,body.dark textarea::placeholder{color:#6f7c94}
+body.dark .smart-box{background:linear-gradient(135deg,#191a3b,#101b31);border-color:#34305f}
+body.dark .card{background:var(--card);border-color:var(--line)}
+body.dark .hero{background:linear-gradient(135deg,#111633,#2a2365)}
+body.dark .ring-inner{background:#171936}
+body.dark .modal,.dark .modal-content{background:#121a2b!important;color:var(--ink)!important;border-color:var(--line)!important}
+body.dark .modal-backdrop{background:rgba(0,0,0,.72)!important}
+body.dark table{color:var(--ink)}
+body.dark th,body.dark td{border-color:var(--line)!important}
+body.dark .calendar,.dark .calendar-wrap{background:transparent}
+body.dark .calday{
+ background:#172136!important;
+ border-color:#2a3853!important;
+ color:var(--ink)!important;
+}
+body.dark .calday b{color:#f4f7ff!important}
+body.dark .calday .dot{color:#b9b1ff!important}
+body.dark .calday.today{
+ background:linear-gradient(135deg,#30276f,#4a3bc0)!important;
+ border-color:#8b7fff!important;
+ color:#fff!important;
+ box-shadow:0 0 0 1px #6d5dfc55,0 8px 20px rgba(109,93,252,.18);
+}
+body.dark .calday.today b{color:#fff!important}
+body.dark .calday.exam{box-shadow:inset 0 0 0 2px #ffb25d,0 0 18px rgba(255,178,93,.12)}
+
+body.dark .muted{color:var(--muted)}
+body.dark .top-actions .btn:first-child{display:inline-flex}
+body.dark .logo{box-shadow:0 9px 22px rgba(109,93,252,.22)}
+.version-badge{
+ display:inline-flex;align-items:center;vertical-align:middle;
+ margin-left:7px;padding:3px 7px;border-radius:999px;
+ font-size:10px;font-weight:850;letter-spacing:.02em;
+ color:#c9c3ff;background:#29234f;border:1px solid #4a4380;
+}
+.theme-toggle{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:105px}
+.theme-toggle .theme-icon{font-size:15px;line-height:1}
+@media(max-width:620px){.theme-toggle{min-width:44px;padding:10px}.theme-toggle .theme-label{display:none}}
+
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+ <div class="brand"><div class="logo">S</div><div><h1>Study Progress <span class="version-badge">v1.1</span></h1><small>Student dashboard</small></div></div>
+ <div class="top-actions"><button class="btn theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode"><span class="theme-icon">🌙</span><span class="theme-label">Dark mode</span></button><button class="btn" id="quickAdd">Quick add</button><button class="btn primary" id="loginBtn">Login</button></div>
+</header>
+
+<div class="tabs">
+ <button class="tab active" data-page="dashboard">Dashboard</button>
+ <button class="tab" data-page="subjects">Subjects</button>
+ <button class="tab" data-page="planner">Planner</button>
+ <button class="tab" data-page="analytics">Analytics</button>
+ <button class="tab" data-page="syllabus">Syllabus</button>
+ <button class="tab" data-page="calendar">Calendar</button>
+ <button class="tab" data-page="review">Review</button>
+</div>
+
+<section class="page active" id="dashboard">
+ <div class="grid">
+  <div class="card hero">
+   <div class="hero-row">
+    <div>
+     <div class="eyebrow" id="todayLabel"></div>
+     <h2>Make today count.</h2>
+     <p id="heroText">Plan a realistic amount, then turn the plan into completed study.</p>
+     <button class="btn" id="heroFocus">Start focus</button>
+    </div>
+    <div class="ring" id="ring"><div class="ring-inner"><div><b id="todayPct">0%</b><span>today</span></div></div></div>
+   </div>
+  </div>
+
+  <div class="card">
+   <div class="section-title">Today</div>
+   <div class="stats">
+    <div class="stat"><b id="actualToday">0h</b><span>studied</span></div>
+    <div class="stat"><b id="doneTasks">0</b><span>tasks done</span></div>
+    <div class="stat"><b id="streak">0</b><span>day streak</span></div>
+   </div>
+   <div style="margin-top:14px"><div class="row"><span class="muted">Daily study target</span><b id="plannedToday">0h</b></div><div class="progress" style="margin-top:6px"><div id="todayProgress" style="width:0%"></div></div></div>
+  </div>
+
+  <div class="card">
+   <div class="section-title">Next up</div>
+   <p id="nextUp" style="font-weight:850;font-size:16px;margin:14px 0 5px">No unfinished tasks</p>
+   <span class="muted" id="nextMeta">Add a task to begin.</span>
+   <button class="btn primary" style="margin-top:13px" id="nextStart">Start</button>
+  </div>
+ </div>
+
+ <div class="grid2">
+  <div class="card">
+   <div class="row"><span class="section-title">Today's plan</span><button class="btn" id="addTaskBtn">+ Task</button></div>
+   <div id="taskList"></div>
+  </div>
+  <div>
+   <div class="card timer-card">
+    <div class="row"><span class="section-title">Focus timer</span><button class="btn mini" id="timerSettings">Edit timer</button></div>
+    <div class="timer" id="timerDisplay">50:00</div>
+    <div class="timer-state" id="timerState">Ready to focus</div>
+    <div class="timer-controls"><button class="btn primary" id="timerStart">Start</button><button class="btn" id="timerReset">Reset</button></div>
+    <div class="timer-presets"><button class="preset" data-focus="25">25 / 5</button><button class="preset active" data-focus="50">50 / 10</button><button class="preset" data-focus="90">90 / 15</button></div>
+   </div>
+   <div class="card" style="margin-top:14px">
+    <div class="row"><span class="section-title">Total planned work</span><button class="btn mini" id="editTarget">Edit</button></div>
+    <div style="font-size:34px;font-weight:950;margin:9px 0" id="totalPlanned">0h</div>
+    <div class="muted">Sum of active task estimates for today.</div>
+   </div>
+  </div>
+ </div>
+
+
+ <div class="grid2">
+  <div class="card">
+   <div class="row"><div><div class="section-title">I have 2 hours</div><div class="muted">Build the best session from unfinished work.</div></div><button class="btn primary" id="twoHourBtn">Plan it</button></div>
+   <div id="quickPlanResult" class="smart-box"><b>Ready when you are.</b><div class="muted" style="margin-top:5px">Uses your unfinished tasks and subject balance.</div></div>
+  </div>
+  <div class="card">
+   <div class="row"><div><div class="section-title">Exam countdown</div><div class="muted">Keep your deadline visible.</div></div><button class="btn mini" id="examEdit">Edit</button></div>
+   <div id="examBox" style="margin-top:12px"><div class="empty">No exam date set.</div></div>
+  </div>
+ </div>
+ <div class="grid2">
+  <div class="card"><div class="row"><span class="section-title">Subjects</span><button class="btn mini" id="addSubject">+ Subject</button></div><div class="subjects" id="subjectCards"></div></div>
+  <div class="card"><div class="row"><span class="section-title">This week</span><span class="tag" id="weekTotal">0h</span></div><div class="week" id="weekChart"></div></div>
+ </div>
+</section>
+
+<section class="page" id="subjects">
+ <div class="card"><div class="row"><div><div class="section-title">Subjects</div><div class="muted">Keep workload visible by subject.</div></div><button class="btn primary" id="addSubject2">+ Subject</button></div><div id="subjectsFull" class="subjects" style="margin-top:15px"></div></div>
+</section>
+
+<section class="page" id="planner">
+ <div class="grid2">
+  <div class="card">
+   <div class="section-title">Build a practical plan</div>
+   <p class="muted">Choose your available time and priority. The plan uses your real task estimates.</p>
+   <div class="form-grid">
+    <div class="field"><label>Available hours</label><input id="availableHours" type="number" min="0.5" max="16" step="0.5" value="6"></div>
+    <div class="field"><label>Priority</label><select id="priority"><option value="urgent">Closest exam / deadline</option><option value="weak">Weakest subject first</option><option value="balanced">Balanced</option></select></div>
+   </div>
+   <button class="btn primary" style="margin-top:10px" id="buildPlan">Build plan</button>
+   <div id="planResult"></div>
+  </div>
+  <div class="card">
+   <div class="section-title">How it works</div>
+   <div class="notice" style="margin-top:12px">1. Add tasks with estimated minutes.<br><br>2. Set the amount of work you can realistically do.<br><br>3. Start a focus block from any task.<br><br>4. Actual time feeds the weekly analytics.</div>
+  </div>
+ </div>
+</section>
+
+<section class="page" id="analytics">
+ <div class="card">
+  <div class="row"><div><div class="section-title">Real weekly analytics</div><div class="muted">Calculated from tasks and completed focus sessions on this device.</div></div><span class="tag">LIVE</span></div>
+  <div class="week" id="analyticsChart"></div>
+  <div class="metric-grid">
+   <div class="metric"><b id="aTotal">0h</b><span class="muted">7-day study</span></div>
+   <div class="metric"><b id="aAvg">0h</b><span class="muted">daily average</span></div>
+   <div class="metric"><b id="aBest">0h</b><span class="muted">best day</span></div>
+   <div class="metric"><b id="aConsistency">0/7</b><span class="muted">active days</span></div>
+  </div>
+ </div>
+ <div class="grid2">
+  <div class="card"><div class="section-title">Study score</div><div style="font-size:45px;font-weight:950;margin:8px 0" id="aScore">0</div><div class="muted">Hours + task completion + consistency.</div><div style="margin-top:14px"><div class="row"><span class="muted">Goal progress</span><b id="aGoal">0%</b></div><div class="progress" style="margin-top:5px"><div id="aGoalBar" style="width:0%"></div></div></div><div style="margin-top:12px"><div class="row"><span class="muted">Task completion</span><b id="aTaskRate">0%</b></div><div class="progress" style="margin-top:5px"><div id="aTaskBar" style="width:0%;background:var(--mint)"></div></div></div></div>
+  <div class="card"><div class="section-title">Subject study time</div><div id="subjectAnalytics" style="margin-top:10px"></div></div>
+ </div>
+ <div class="card" style="margin-top:14px"><div class="section-title">What should you do next?</div><p class="muted" id="insight">Start a focus session and your analytics will begin learning your study pattern.</p></div>
+</section>
+</div>
+
+<div class="modal" id="modal"><div class="sheet"><div class="row"><h3 id="modalTitle">Edit</h3><button class="btn" id="modalClose">Close</button></div><div id="modalBody"></div></div></div>
+
+<section class="page" id="syllabus">
+ <div class="grid2">
+  <div class="card">
+   <div class="row"><div><div class="section-title">Syllabus tracker</div><div class="muted">Track chapters instead of guessing how much is left.</div></div><button class="btn primary" id="addChapter">+ Chapter</button></div>
+   <div id="syllabusList" style="margin-top:10px"></div>
+  </div>
+  <div class="card">
+   <div class="section-title">Syllabus health</div>
+   <div class="metric-grid" style="margin-top:12px"><div class="metric"><b id="syTotal">0%</b><span class="muted">overall</span></div><div class="metric"><b id="syMastered">0</b><span class="muted">mastered</span></div><div class="metric"><b id="syLearning">0</b><span class="muted">learning</span></div><div class="metric"><b id="syLeft">0</b><span class="muted">not started</span></div></div>
+   <div class="smart-box"><b>Revision system</b><p class="muted">When you mark a chapter as studied, the app schedules review checkpoints at +1, +3, +7 and +21 days.</p><div id="revisionQueue"></div></div>
+  </div>
+ </div>
+</section>
+
+<section class="page" id="calendar">
+ <div class="card">
+  <div class="row"><div><div class="section-title">Study calendar</div><div class="muted">Study, tasks and exam dates in one place.</div></div><div class="top-actions"><button class="btn mini" id="prevMonth">‹</button><button class="btn mini" id="monthLabel">Month</button><button class="btn mini" id="nextMonth">›</button></div></div>
+  <div class="calendar-wrap"><div id="calendarGrid" class="calendar"></div></div>
+ </div>
+</section>
+
+<section class="page" id="review">
+ <div class="grid2">
+  <div class="card">
+   <div class="section-title">Weekly review</div>
+   <p class="muted">A useful summary generated from your recorded activity.</p>
+   <div id="reviewStats" class="metric-grid" style="margin-top:12px"></div>
+   <div class="smart-box"><b>What went well</b><p id="reviewGood" class="muted"></p><b>Where to improve</b><p id="reviewImprove" class="muted"></p><b>Next week</b><p id="reviewNext" class="muted"></p></div>
+  </div>
+  <div class="card">
+   <div class="section-title">Planned vs actual</div>
+   <div id="plannedActual"></div>
+   <div class="section-title" style="margin-top:18px">Personal bests</div>
+   <div id="personalBests" style="margin-top:10px"></div>
+  </div>
+ </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY="studyProgressGenuineV1";
+const today=()=>new Date().toISOString().slice(0,10);
+const defaultDB={
+ username:"",
+ dailyTargetMin:480,
+ subjects:[
+  {id:"bio",name:"Biology",color:"s1"},
+  {id:"chem",name:"Chemistry",color:"s2"},
+  {id:"phy",name:"Physics",color:"s3"},
+  {id:"eng",name:"English",color:"s4"}
+ ],
+ tasks:[],
+ days:{},
+ sessions:[],chapters:[],exam:null
+};
+let db=load();
+let timer={mode:"focus",focusMin:50,breakMin:10,remaining:3000,running:false,endAt:0,startedAt:0,subjectId:null,taskId:null};
+let timerInterval=null;
+
+function load(){
+ try{
+  const x=JSON.parse(localStorage.getItem(KEY)||"null");
+  if(!x)return structuredClone(defaultDB);
+  return {...structuredClone(defaultDB),...x,subjects:x.subjects||[],tasks:x.tasks||[],days:x.days||{},sessions:x.sessions||[],chapters:x.chapters||[],exam:x.exam||null};
+ }catch(e){return structuredClone(defaultDB)}
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+function fmtMin(min){min=Math.max(0,Math.round(min));const h=Math.floor(min/60),m=min%60;return h?`${h}h ${m?m+"m":""}`.trim():`${m}m`}
+function dayKey(d=new Date()){return d.toISOString().slice(0,10)}
+function dateKeys(){
+ const out=[];let d=new Date();d.setHours(12,0,0,0);
+ for(let i=6;i>=0;i--){let x=new Date(d);x.setDate(d.getDate()-i);out.push(dayKey(x))}
+ return out
+}
+function actualForDay(k){return +(db.days[k]||0)}
+function plannedMinutes(){return db.tasks.filter(t=>!t.deleted).reduce((s,t)=>s+(+t.minutes||0),0)}
+function plannedBySubject(id){return db.tasks.filter(t=>!t.deleted&&(t.subjectId===id||id==="all")).reduce((s,t)=>s+t.minutes,0)}
+function actualBySubject(){
+ const map={};db.subjects.forEach(s=>map[s.id]=0);
+ db.sessions.forEach(s=>map[s.subjectId]=(map[s.subjectId]||0)+s.minutes);
+ return map
+}
+function addActual(minutes,subjectId){
+ const k=dayKey();db.days[k]=+((db.days[k]||0)+minutes).toFixed(2);
+ db.sessions.push({id:Date.now()+Math.random(),date:k,minutes,subjectId:subjectId||null});
+}
+function showToast(t){const el=document.getElementById("toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2200)}
+function openModal(title,body){modalTitle.textContent=title;modalBody.innerHTML=body;modal.classList.add("show")}
+function closeModal(){modal.classList.remove("show")}
+modalClose.onclick=closeModal;modal.onclick=e=>{if(e.target===modal)closeModal()}
+
+
+function minutesForWeek(){
+ return dateKeys().reduce((s,k)=>s+actualForDay(k),0);
+}
+function formatDate(iso){
+ if(!iso)return "";
+ return new Date(iso+"T12:00:00").toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"});
+}
+function daysUntil(iso){
+ if(!iso)return null;
+ const a=new Date();a.setHours(0,0,0,0);
+ const b=new Date(iso+"T00:00:00");
+ return Math.ceil((b-a)/86400000);
+}
+function renderExam(){
+ const box=document.getElementById("examBox");
+ if(!db.exam){box.innerHTML='<div class="empty">No exam date set.</div>';return}
+ const n=daysUntil(db.exam.date);
+ box.innerHTML=`<div style="font-size:36px;font-weight:950">${n<0?"Past":n}</div><div style="font-weight:850">${esc(db.exam.name)}</div><div class="muted">${formatDate(db.exam.date)} ${n>=0?`• ${n} day${n===1?"":"s"} remaining`:""}</div>`;
+}
+function renderSyllabus(){
+ const list=document.getElementById("syllabusList");
+ const total=db.chapters.length, mastered=db.chapters.filter(c=>c.status==="mastered").length, learning=db.chapters.filter(c=>c.status==="learning").length, left=total-mastered-learning;
+ syTotal.textContent=(total?Math.round(mastered/total*100):0)+"%";syMastered.textContent=mastered;syLearning.textContent=learning;syLeft.textContent=Math.max(0,left);
+ list.innerHTML=total?db.chapters.map(c=>`<div class="syllabus-row"><div class="row"><div class="chapter"><input type="checkbox" ${c.status==="mastered"?"checked":""} onchange="setChapterStatus('${c.id}',this.checked?'mastered':'learning')"><b>${esc(c.name)}</b></div><button class="btn mini" onclick="editChapter('${c.id}')">${esc(c.status)}</button></div><div class="muted" style="margin:5px 0 0 28px">${esc(subjectName(c.subjectId))}${c.nextReview?` • next review ${formatDate(c.nextReview)}`:""}</div></div>`).join(""):'<div class="empty">Add chapters to start tracking your syllabus.</div>';
+ const due=db.chapters.filter(c=>c.nextReview&&c.nextReview<=dayKey()).sort((a,b)=>a.nextReview.localeCompare(b.nextReview));
+ revisionQueue.innerHTML=due.length?due.map(c=>`<div class="plan-item"><div class="plan-num">R</div><div><b>${esc(c.name)}</b><div class="muted">${esc(subjectName(c.subjectId))} • due ${formatDate(c.nextReview)}</div></div><button class="btn mini" onclick="completeRevision('${c.id}')">Done</button></div>`).join(""):'<div class="muted" style="margin-top:9px">No revisions due today.</div>';
+}
+function setChapterStatus(id,status){
+ const c=db.chapters.find(x=>x.id===id);if(!c)return;
+ c.status=status;
+ if(status==="mastered"){c.studiedOn=dayKey();c.nextReview=addDays(c.studiedOn,21)}
+ else if(status==="learning"&&!c.studiedOn){c.studiedOn=dayKey();c.nextReview=addDays(c.studiedOn,1)}
+ save();renderSyllabus();renderReview();renderCalendar();showToast("Syllabus updated");
+}
+function addDays(iso,n){const d=new Date(iso+"T12:00:00");d.setDate(d.getDate()+n);return dayKey(d)}
+function completeRevision(id){
+ const c=db.chapters.find(x=>x.id===id);if(!c)return;
+ const todayK=dayKey(), checkpoints=[1,3,7,21], currentIndex=checkpoints.findIndex(x=>addDays(c.studiedOn||todayK,x)===c.nextReview);
+ const next=checkpoints[Math.min(checkpoints.length-1,Math.max(0,currentIndex+1))];
+ c.studiedOn=todayK;c.nextReview=addDays(todayK,next);save();renderSyllabus();renderCalendar();showToast("Revision recorded");
+}
+function addChapter(){
+ openModal("Add chapter",`<div class="field"><label>Chapter / topic</label><input id="chapterName" placeholder="e.g. Human Physiology"></div><div class="field" style="margin-top:9px"><label>Subject</label><select id="chapterSubject">${db.subjects.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("")}</select></div><div class="actions"><button class="btn primary" onclick="createChapter()">Add</button></div>`);
+}
+function createChapter(){const name=chapterName.value.trim();if(!name)return;db.chapters.push({id:crypto.randomUUID(),name,subjectId:chapterSubject.value,status:"not started",studiedOn:null,nextReview:null});save();closeModal();renderSyllabus();renderCalendar();showToast("Chapter added")}
+function editChapter(id){
+ const c=db.chapters.find(x=>x.id===id);if(!c)return;
+ openModal("Edit chapter",`<div class="field"><label>Chapter</label><input id="chapterName" value="${esc(c.name)}"></div><div class="field" style="margin-top:9px"><label>Subject</label><select id="chapterSubject">${db.subjects.map(s=>`<option value="${s.id}" ${s.id===c.subjectId?"selected":""}>${esc(s.name)}</option>`).join("")}</select></div><div class="actions"><button class="btn danger" onclick="deleteChapter('${id}')">Delete</button><button class="btn primary" onclick="saveChapter('${id}')">Save</button></div>`);
+}
+function saveChapter(id){const c=db.chapters.find(x=>x.id===id);if(!c)return;c.name=chapterName.value.trim()||c.name;c.subjectId=chapterSubject.value;save();closeModal();renderSyllabus();renderCalendar();showToast("Chapter updated")}
+function deleteChapter(id){db.chapters=db.chapters.filter(c=>c.id!==id);save();closeModal();renderSyllabus();renderCalendar();showToast("Chapter deleted")}
+function editExam(){
+ openModal("Exam countdown",`<div class="field"><label>Exam name</label><input id="examName" value="${esc(db.exam?.name||"My exam")}" placeholder="e.g. NEET UG"></div><div class="field" style="margin-top:9px"><label>Exam date</label><input id="examDate" type="date" value="${db.exam?.date||""}"></div><div class="actions"><button class="btn danger" onclick="clearExam()">Clear</button><button class="btn primary" onclick="saveExam()">Save</button></div>`);
+}
+function saveExam(){if(!examDate.value){showToast("Choose an exam date");return}db.exam={name:examName.value.trim()||"My exam",date:examDate.value};save();closeModal();renderExam();renderCalendar();showToast("Exam countdown saved")}
+function clearExam(){db.exam=null;save();closeModal();renderExam();renderCalendar();showToast("Exam removed")}
+function renderCalendar(){
+ const now=window.calMonth||new Date();const y=now.getFullYear(),m=now.getMonth();monthLabel.textContent=now.toLocaleDateString(undefined,{month:"long",year:"numeric"});
+ const first=new Date(y,m,1),last=new Date(y,m+1,0),start=(first.getDay()+6)%7;
+ const heads=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];let out=heads.map(h=>`<div class="calhead">${h}</div>`).join("");
+ for(let i=0;i<start;i++)out+=`<div class="calday"></div>`;
+ for(let d=1;d<=last.getDate();d++){
+  const iso=dayKey(new Date(y,m,d,12));const hrs=actualForDay(iso);const tasks=db.tasks.filter(t=>t.completedAt?.slice(0,10)===iso).length;const exam=iso===db.exam?.date;
+  out+=`<div class="calday ${iso===dayKey()?"today":""} ${exam?"exam":""}"><b>${d}</b>${hrs?`<span class="dot">${fmtMin(hrs)}</span>`:""}${tasks?`<span class="dot">• ${tasks} task${tasks>1?"s":""}</span>`:""}${exam?`<span class="dot">EXAM</span>`:""}</div>`;
+ }
+ calendarGrid.innerHTML=out;
+}
+function quickTwoHours(){
+ const target=120;let pool=db.tasks.filter(t=>!t.completed&&!t.deleted);
+ const actual=actualBySubject();pool.sort((a,b)=>((actual[a.subjectId]||0)-(actual[b.subjectId]||0)) || (b.minutes-a.minutes));
+ let left=target,chosen=[];
+ for(const t of pool){if(left<=0)break;const m=Math.min(t.minutes,left);chosen.push({t,m});left-=m}
+ quickPlanResult.innerHTML=chosen.length?`<b>Your 2-hour plan</b>${chosen.map((x,i)=>`<div class="plan-item"><div class="plan-num">${i+1}</div><div><b>${esc(x.t.title)}</b><div class="muted">${esc(subjectName(x.t.subjectId))} • ${fmtMin(x.m)}</div></div><button class="btn mini" onclick="startTask('${x.t.id}')">Start</button></div>`).join("")}<div class="chips"><span class="chip">${fmtMin(target-left)} planned</span><span class="chip">${chosen.length} tasks</span></div>`:'<b>No unfinished work.</b><div class="muted" style="margin-top:5px">Add tasks first.</div>';
+}
+function renderReview(){
+ const keys=dateKeys(),total=keys.reduce((s,k)=>s+actualForDay(k),0),planned=db.tasks.reduce((s,t)=>s+t.minutes,0),completed=db.tasks.filter(t=>t.completed).length;
+ const best=Math.max(...keys.map(actualForDay),0),active=keys.filter(k=>actualForDay(k)>0).length,rate=db.tasks.length?Math.round(completed/db.tasks.length*100):0;
+ reviewStats.innerHTML=`<div class="metric"><b>${fmtMin(total)}</b><span class="muted">actual</span></div><div class="metric"><b>${fmtMin(planned)}</b><span class="muted">planned</span></div><div class="metric"><b>${rate}%</b><span class="muted">tasks done</span></div><div class="metric"><b>${active}/7</b><span class="muted">active days</span></div>`;
+ const bestSubject=Object.entries(actualBySubject()).sort((a,b)=>b[1]-a[1])[0];
+ reviewGood.textContent=best>0?`Your best day was ${fmtMin(best)}. ${bestSubject&&bestSubject[1]>0?subjectName(bestSubject[0])+" is currently receiving the most recorded study time.":""}`:"There is not enough recorded data yet.";
+ reviewImprove.textContent=planned>total?`You planned ${fmtMin(planned)} and recorded ${fmtMin(total)}. Use smaller task estimates if the gap keeps happening.`:"Your actual study time is meeting or exceeding your current task plan.";
+ reviewNext.textContent=active<5?"Aim for a small study block on more days rather than trying to make up everything at once.":"Keep your current consistency and prioritize unfinished high-value tasks.";
+ plannedActual.innerHTML=`<div class="row"><span>Planned</span><b>${fmtMin(planned)}</b></div><div class="progress" style="margin:5px 0 12px"><div style="width:${Math.min(100,planned?total/planned*100:0)}%"></div></div><div class="row"><span>Actual</span><b>${fmtMin(total)}</b></div>`;
+ const vals=keys.map(actualForDay);const max=Math.max(...vals,0);personalBests.innerHTML=`<div class="notice">Best day: <b>${fmtMin(max)}</b><br>Active days: <b>${active}/7</b><br>Current task completion: <b>${rate}%</b></div>`;
+}
+function render(){
+ const todayK=dayKey(), planned=plannedMinutes(), actual=actualForDay(todayK);
+ const pct=planned?Math.min(100,Math.round(actual/planned*100)):0;
+ todayPct.textContent=pct+"%";ring.style.setProperty("--p",pct+"%");
+ actualToday.textContent=fmtMin(actual);plannedToday.textContent=fmtMin(db.dailyTargetMin);totalPlanned.textContent=fmtMin(planned);
+ todayProgress.style.width=pct+"%";
+ const done=db.tasks.filter(t=>!t.deleted&&t.completed).length;doneTasks.textContent=done;
+ let streak=0;for(let i=0;i<365;i++){let d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-i);if(actualForDay(dayKey(d))>0)streak++;else break}document.getElementById("streak").textContent=streak;
+ const next=db.tasks.find(t=>!t.deleted&&!t.completed);
+ nextUp.textContent=next?next.title:"All tasks complete";nextMeta.textContent=next?`${subjectName(next.subjectId)} • ${fmtMin(next.minutes)}`:"Add another task when you need one.";nextStart.style.display=next?"inline-block":"none";
+ taskList.innerHTML=db.tasks.filter(t=>!t.deleted).length?db.tasks.filter(t=>!t.deleted).map((t,i)=>taskHTML(t)).join(""):'<div class="empty">No tasks yet. Add your first study task.</div>';
+ subjectCards.innerHTML=db.subjects.map(subjectCard).join("");
+ subjectsFull.innerHTML=db.subjects.map((s,i)=>subjectCard(s,true,i)).join("");
+ drawWeek(weekChart);drawWeek(analyticsChart);renderAnalytics();renderExam();renderSyllabus();renderReview();renderCalendar();
+ updateLogin();
+}
+function taskHTML(t){
+ return `<div class="task ${t.completed?"done":""}">
+ <input type="checkbox" ${t.completed?"checked":""} onchange="toggleTask('${t.id}',this.checked)">
+ <div class="task-main"><div class="task-name">${esc(t.title)}</div><span class="tag">${esc(subjectName(t.subjectId))} • ${fmtMin(t.minutes)}</span></div>
+ <div class="task-actions"><button class="btn mini" onclick="startTask('${t.id}')">Start</button><button class="btn mini" onclick="editTask('${t.id}')">Edit</button></div></div>`
+}
+function subjectCard(s,full=false,i=0){
+ const mins=plannedBySubject(s.id), a=actualBySubject()[s.id]||0;
+ return `<div class="subject ${s.color}"><b>${esc(s.name)}</b><small>Planned ${fmtMin(mins)} • Actual ${fmtMin(a)}</small>${full?`<button class="btn mini" style="margin-top:9px" onclick="editSubject('${s.id}')">Edit</button>`:""}</div>`
+}
+function subjectName(id){return db.subjects.find(s=>s.id===id)?.name||"General"}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+
+function drawWeek(el){
+ const keys=dateKeys(),vals=keys.map(actualForDay),max=Math.max(1,db.dailyTargetMin/60,...vals);
+ el.innerHTML=vals.map((v,i)=>`<div class="barwrap"><span class="hourslabel">${(v/60).toFixed(v%60?1:0)}h</span><div class="wbar" style="height:${Math.max(6,v/max*125)}px"></div><span class="day">${new Date(keys[i]+"T12:00:00").toLocaleDateString(undefined,{weekday:"short"})}</span></div>`).join("");
+ weekTotal.textContent=fmtMin(vals.reduce((a,b)=>a+b,0));
+}
+function renderAnalytics(){
+ const keys=dateKeys(),vals=keys.map(actualForDay),total=vals.reduce((a,b)=>a+b,0),avg=total/7,best=Math.max(...vals,0),active=vals.filter(v=>v>0).length;
+ const plannedWeek=db.tasks.reduce((a,t)=>a+t.minutes,0),completed=db.tasks.filter(t=>t.completed).length,totalTasks=db.tasks.length;
+ const taskRate=totalTasks?Math.round(completed/totalTasks*100):0,goal=Math.min(100,Math.round(total/Math.max(1,db.dailyTargetMin*7)*100));
+ const score=Math.round(goal*.45+taskRate*.35+(active/7*100)*.2);
+ aTotal.textContent=fmtMin(total);aAvg.textContent=fmtMin(avg);aBest.textContent=fmtMin(best);aConsistency.textContent=active+"/7";aScore.textContent=Math.min(100,score);aGoal.textContent=goal+"%";aTaskRate.textContent=taskRate+"%";aGoalBar.style.width=goal+"%";aTaskBar.style.width=taskRate+"%";
+ const map=actualBySubject(), rows=db.subjects.map(s=>[s.name,map[s.id]||0]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
+ subjectAnalytics.innerHTML=rows.length?rows.map(([n,m])=>`<div style="margin:11px 0"><div class="row"><b>${esc(n)}</b><span class="muted">${fmtMin(m)}</span></div><div class="progress" style="margin-top:5px"><div style="width:${Math.min(100,m/Math.max(total,1)*100)}%"></div></div></div>`).join(""):'<div class="empty">Finish a task or focus session to see subject analytics.</div>';
+ insight.textContent=total===0?"Start your first focus block. The dashboard will record actual study time automatically.":active<3?"Your week has a few study gaps. A shorter daily block may be easier to maintain.":goal>=100?"You reached your weekly study-hour target. Keep the plan realistic and consistent.":`You are ${goal}% through this week's study-hour target. Focus on the next unfinished task.`;
+}
+
+function toggleTask(id,v){
+ const t=db.tasks.find(x=>x.id===id);if(!t)return;
+ t.completed=v;t.completedAt=v?new Date().toISOString():null;
+ save();render();showToast(v?"Task completed":"Task reopened");
+}
+function startTask(id){
+ const t=db.tasks.find(x=>x.id===id);if(!t)return;
+ timer.taskId=id;timer.subjectId=t.subjectId;startFocus();
+ document.querySelector('[data-page="dashboard"]').click();
+ showToast(`Focus timer started for ${t.title}`);
+}
+function editTask(id){
+ const t=db.tasks.find(x=>x.id===id);if(!t)return;
+ openModal("Edit task",`<div class="field"><label>Task</label><input id="fTitle" value="${esc(t.title)}"></div>
+ <div class="form-grid"><div class="field"><label>Planned minutes</label><input id="fMin" type="number" min="5" max="1440" step="5" value="${t.minutes}"></div>
+ <div class="field"><label>Subject</label><select id="fSub">${db.subjects.map(s=>`<option value="${s.id}" ${s.id===t.subjectId?"selected":""}>${esc(s.name)}</option>`).join("")}</select></div></div>
+ <div class="actions"><button class="btn danger" onclick="deleteTask('${id}')">Delete</button><button class="btn primary" onclick="saveTask('${id}')">Save</button></div>`)
+}
+function saveTask(id){const t=db.tasks.find(x=>x.id===id);if(!t)return;t.title=fTitle.value.trim()||"Untitled task";t.minutes=Math.max(5,+fMin.value||5);t.subjectId=fSub.value;save();closeModal();render();showToast("Task updated")}
+function deleteTask(id){db.tasks=db.tasks.filter(t=>t.id!==id);save();closeModal();render();showToast("Task deleted")}
+function addTask(){
+ openModal("Add study task",`<div class="field"><label>What do you need to study?</label><input id="fTitle" placeholder="e.g. Physics — Current electricity"></div>
+ <div class="form-grid"><div class="field"><label>Planned minutes</label><input id="fMin" type="number" min="5" max="1440" step="5" value="60"></div>
+ <div class="field"><label>Subject</label><select id="fSub">${db.subjects.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("")}</select></div></div>
+ <div class="actions"><button class="btn primary" onclick="createTask()">Add task</button></div>`)
+}
+function createTask(){const title=fTitle.value.trim();if(!title){showToast("Enter a task name");return}db.tasks.push({id:crypto.randomUUID(),title,minutes:Math.max(5,+fMin.value||5),subjectId:fSub.value,completed:false,createdAt:new Date().toISOString()});save();closeModal();render();showToast("Task added")}
+quickAdd.onclick=addTask;addTaskBtn.onclick=addTask;
+
+function editTarget(){openModal("Total planned work",`<div class="notice">This is your daily study target. Your actual planned work is the sum of the tasks below.</div><div class="field" style="margin-top:10px"><label>Daily target (minutes)</label><input id="targetMin" type="number" min="30" max="960" step="15" value="${db.dailyTargetMin}"></div><div class="actions"><button class="btn primary" onclick="saveTarget()">Save target</button></div>`)}
+function saveTarget(){db.dailyTargetMin=Math.max(30,Math.min(960,+targetMin.value||480));save();closeModal();render();showToast("Daily target updated")}
+document.getElementById("editTarget").onclick=editTarget;
+
+function addSubject(){openModal("Add subject",`<div class="field"><label>Subject name</label><input id="subjectNameInput" placeholder="e.g. Mathematics"></div><div class="actions"><button class="btn primary" onclick="createSubject()">Add</button></div>`)}
+function createSubject(){const n=subjectNameInput.value.trim();if(!n)return;const colors=["s1","s2","s3","s4"];db.subjects.push({id:crypto.randomUUID(),name:n,color:colors[db.subjects.length%4]});save();closeModal();render();showToast("Subject added")}
+function editSubject(id){const s=db.subjects.find(x=>x.id===id);if(!s)return;openModal("Edit subject",`<div class="field"><label>Subject name</label><input id="subjectNameInput" value="${esc(s.name)}"></div><div class="actions"><button class="btn danger" onclick="removeSubject('${id}')">Delete</button><button class="btn primary" onclick="saveSubject('${id}')">Save</button></div>`)}
+function saveSubject(id){const s=db.subjects.find(x=>x.id===id);if(!s)return;s.name=subjectNameInput.value.trim()||s.name;save();closeModal();render();showToast("Subject updated")}
+function removeSubject(id){if(db.tasks.some(t=>t.subjectId===id)){showToast("Move or delete its tasks first");return}db.subjects=db.subjects.filter(s=>s.id!==id);save();closeModal();render();showToast("Subject deleted")}
+addSubject.onclick=addSubject2.onclick=addSubject;
+
+function buildPlan(){
+ const available=Math.max(.5,Math.min(16,+availableHours.value||6))*60;
+ let pool=db.tasks.filter(t=>!t.completed&&!t.deleted).slice();
+ if(priority.value==="weak"){
+  const actual=actualBySubject();pool.sort((a,b)=>(actual[a.subjectId]||0)-(actual[b.subjectId]||0));
+ }else if(priority.value==="urgent"){pool.sort((a,b)=>b.minutes-a.minutes)}
+ else{pool.sort((a,b)=>a.createdAt.localeCompare(b.createdAt))}
+ let left=available, chosen=[];for(const t of pool){if(left<=0)break;const m=Math.min(t.minutes,left);chosen.push({t,m});left-=m}
+ planResult.innerHTML=chosen.length?`<div style="margin-top:14px">${chosen.map((x,i)=>`<div class="plan-item"><div class="plan-num">${i+1}</div><div><b>${esc(x.t.title)}</b><div class="muted">${esc(subjectName(x.t.subjectId))} • ${fmtMin(x.m)}</div></div></div>`).join("")}</div><div class="notice" style="margin-top:10px">${left>0?`You have ${fmtMin(left)} unfilled. Add another task or keep the buffer.`:"Plan filled to your available time."}</div>`:'<div class="empty">No unfinished tasks. Add some tasks first.</div>';
+}
+buildPlan.onclick=buildPlan;
+
+function timerLabel(){const m=Math.floor(timer.remaining/60),s=timer.remaining%60;return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`}
+function updateTimerUI(){timerDisplay.textContent=timerLabel();timerState.textContent=timer.running?(timer.mode==="focus"?"Focus in progress":"Break in progress"):(timer.mode==="focus"?"Ready to focus":"Break ready");timerStart.textContent=timer.running?"Pause":"Start";document.querySelectorAll(".preset").forEach(p=>p.classList.toggle("active",+p.dataset.focus===timer.focusMin))}
+function timerTick(){
+ if(!timer.running)return;
+ timer.remaining=Math.max(0,Math.ceil((timer.endAt-Date.now())/1000));
+ updateTimerUI();
+ if(timer.remaining<=0)finishTimer();
+}
+function startFocus(){if(timer.mode!=="focus"){timer.mode="focus";timer.remaining=timer.focusMin*60}timer.running=true;timer.startedAt=Date.now();timer.endAt=Date.now()+timer.remaining*1000;clearInterval(timerInterval);timerInterval=setInterval(timerTick,250);updateTimerUI()}
+function pauseTimer(){if(!timer.running)return;timer.remaining=Math.max(0,Math.ceil((timer.endAt-Date.now())/1000));timer.running=false;clearInterval(timerInterval);timerInterval=null;updateTimerUI()}
+function resetTimer(){pauseTimer();timer.mode="focus";timer.remaining=timer.focusMin*60;timer.taskId=null;timer.subjectId=null;updateTimerUI()}
+function finishTimer(){
+ clearInterval(timerInterval);timerInterval=null;timer.running=false;
+ if(timer.mode==="focus"){
+  addActual(timer.focusMin,timer.subjectId);
+  if(timer.taskId){const t=db.tasks.find(x=>x.id===timer.taskId);if(t&&!t.completed){t.completed=true;t.completedAt=new Date().toISOString()}}
+  save();render();showToast(`Focus complete: ${timer.focusMin} minutes recorded`);
+  timer.mode="break";timer.remaining=timer.breakMin*60;
+ }else{timer.mode="focus";timer.remaining=timer.focusMin*60;showToast("Break complete — ready to focus")}
+ updateTimerUI();
+}
+timerStart.onclick=()=>timer.running?pauseTimer():startFocus();
+timerReset.onclick=resetTimer;
+heroFocus.onclick=()=>startFocus();
+nextStart.onclick=()=>{const t=db.tasks.find(x=>!x.completed);if(t)startTask(t.id)};
+document.querySelectorAll(".preset").forEach(p=>p.onclick=()=>{pauseTimer();timer.focusMin=+p.dataset.focus;timer.breakMin=+p.dataset.focus===25?5:+p.dataset.focus===90?15:10;timer.mode="focus";timer.remaining=timer.focusMin*60;updateTimerUI();saveTimerSettings()});
+function saveTimerSettings(){localStorage.setItem("studyProgressTimer",JSON.stringify({focusMin:timer.focusMin,breakMin:timer.breakMin}))}
+function loadTimerSettings(){try{const x=JSON.parse(localStorage.getItem("studyProgressTimer")||"null");if(x){timer.focusMin=+x.focusMin||50;timer.breakMin=+x.breakMin||10;timer.remaining=timer.focusMin*60}}catch(e){}}
+loadTimerSettings();
+
+timerSettings.onclick=()=>openModal("Edit focus timer",`<div class="form-grid"><div class="field"><label>Focus minutes</label><input id="focusMinInput" type="number" min="1" max="180" step="1" value="${timer.focusMin}"></div><div class="field"><label>Break minutes</label><input id="breakMinInput" type="number" min="1" max="60" step="1" value="${timer.breakMin}"></div></div><div class="actions"><button class="btn primary" onclick="saveTimerSettingsModal()">Save timer</button></div>`)
+function saveTimerSettingsModal(){pauseTimer();timer.focusMin=Math.max(1,Math.min(180,+focusMinInput.value||50));timer.breakMin=Math.max(1,Math.min(60,+breakMinInput.value||10));timer.mode="focus";timer.remaining=timer.focusMin*60;saveTimerSettings();closeModal();updateTimerUI();showToast("Timer settings saved")}
+
+document.addEventListener("visibilitychange",()=>{if(timer.running)timerTick()});
+window.addEventListener("beforeunload",()=>{if(timer.running){timer.remaining=Math.max(0,Math.ceil((timer.endAt-Date.now())/1000));localStorage.setItem("studyProgressTimerRuntime",JSON.stringify(timer))}});
+function restoreTimer(){try{const x=JSON.parse(localStorage.getItem("studyProgressTimerRuntime")||"null");if(!x)return;localStorage.removeItem("studyProgressTimerRuntime");if(x.running&&x.endAt>Date.now()){timer={...timer,...x};timer.remaining=Math.ceil((timer.endAt-Date.now())/1000);timer.running=true;timerInterval=setInterval(timerTick,250)}else if(x.running&&x.endAt<=Date.now()){timer={...timer,...x,remaining:0};finishTimer()}}catch(e){}updateTimerUI()}
+restoreTimer();
+
+function updateLogin(){loginBtn.textContent=db.username?("@"+db.username):"Login"}
+loginBtn.onclick=()=>openModal("Student profile",`<div class="notice">This prototype keeps your username and study records on this device. A production cloud account would need secure authentication and a clear privacy policy.</div><div class="field" style="margin-top:10px"><label>Username</label><input id="usernameInput" maxlength="30" value="${esc(db.username)}" placeholder="Choose a username"></div><div class="actions"><button class="btn primary" onclick="saveUsername()">Save profile</button></div>`)
+function saveUsername(){db.username=usernameInput.value.trim().replace(/\s+/g," ").slice(0,30);save();closeModal();render();showToast("Profile saved")}
+
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".page").forEach(x=>x.classList.toggle("active",x.id===b.dataset.page));if(b.dataset.page==="analytics")renderAnalytics();if(b.dataset.page==="syllabus")renderSyllabus();if(b.dataset.page==="calendar")renderCalendar();if(b.dataset.page==="review")renderReview()});
+
+document.getElementById("twoHourBtn").onclick=quickTwoHours;
+document.getElementById("examEdit").onclick=editExam;
+document.getElementById("addChapter").onclick=addChapter;
+window.calMonth=new Date();
+document.getElementById("prevMonth").onclick=()=>{window.calMonth.setMonth(window.calMonth.getMonth()-1);renderCalendar()};
+document.getElementById("nextMonth").onclick=()=>{window.calMonth.setMonth(window.calMonth.getMonth()+1);renderCalendar()};
+
+todayLabel.textContent=new Date().toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});
+render();updateTimerUI();
+
+/* Dark mode: saved locally + respects device preference on first visit */
+(function(){
+  const toggle=document.getElementById("themeToggle");
+  const root=document.body;
+  const meta=document.querySelector('meta[name="theme-color"]');
+  const media=window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
+
+  function applyTheme(mode){
+    const dark=mode==="dark";
+    root.classList.toggle("dark",dark);
+    if(toggle){
+      toggle.querySelector(".theme-icon").textContent=dark?"☀️":"🌙";
+      toggle.querySelector(".theme-label").textContent=dark?"Light mode":"Dark mode";
+      toggle.setAttribute("aria-pressed",String(dark));
+      toggle.setAttribute("aria-label",dark?"Switch to light mode":"Switch to dark mode");
+    }
+    if(meta) meta.setAttribute("content",dark?"#0b1020":"#6d5dfc");
+    localStorage.setItem("studyProgressTheme",dark?"dark":"light");
+  }
+
+  const saved=localStorage.getItem("studyProgressTheme");
+  applyTheme(saved || (media && media.matches ? "dark" : "light"));
+
+  if(toggle) toggle.addEventListener("click",function(){
+    applyTheme(root.classList.contains("dark")?"light":"dark");
+  });
+
+  if(media && media.addEventListener && !saved){
+    media.addEventListener("change",e=>applyTheme(e.matches?"dark":"light"));
+  }
+})();
+
+</script>
+</body>
+</html>
