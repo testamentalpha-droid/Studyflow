@@ -1,0 +1,9 @@
+{
+  "name": "Study Progress",
+  "short_name": "Study Progress",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f6f7fb",
+  "theme_color": "#6d5dfc",
+  "description": "Student planner, focus timer, syllabus tracker and progress analytics."
+}
