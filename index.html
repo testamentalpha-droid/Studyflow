@@ -104,12 +104,26 @@ body.dark .logo{box-shadow:0 9px 22px rgba(109,93,252,.22)}
 .theme-toggle .theme-icon{font-size:15px;line-height:1}
 @media(max-width:620px){.theme-toggle{min-width:44px;padding:10px}.theme-toggle .theme-label{display:none}}
 
+
+/* v2.0 functional UI fixes */
+body.dark .metric{background:#f7f8fc!important;color:#182033!important}
+body.dark .metric b{color:#182033!important}
+body.dark .metric .muted{color:#788197!important}
+body.dark .metric-grid .metric{min-height:82px}
+.metric b{min-height:27px}
+.syllabus-row .btn.mini{text-transform:capitalize}
+@media(max-width:700px){
+  .metric-grid{grid-template-columns:repeat(2,1fr)!important}
+  .grid2{grid-template-columns:1fr!important}
+  .form-grid{grid-template-columns:1fr!important}
+}
+
 </style>
 </head>
 <body>
 <div class="app">
 <header>
- <div class="brand"><div class="logo">S</div><div><h1>Study Progress <span class="version-badge">v1.1</span></h1><small>Student dashboard</small></div></div>
+ <div class="brand"><div class="logo">S</div><div><h1>Study Progress <span class="version-badge">v2.0</span></h1><small>Student dashboard</small></div></div>
  <div class="top-actions"><button class="btn theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode"><span class="theme-icon">🌙</span><span class="theme-label">Dark mode</span></button><button class="btn" id="quickAdd">Quick add</button><button class="btn primary" id="loginBtn">Login</button></div>
 </header>
 
@@ -349,27 +363,51 @@ function renderExam(){
  const n=daysUntil(db.exam.date);
  box.innerHTML=`<div style="font-size:36px;font-weight:950">${n<0?"Past":n}</div><div style="font-weight:850">${esc(db.exam.name)}</div><div class="muted">${formatDate(db.exam.date)} ${n>=0?`• ${n} day${n===1?"":"s"} remaining`:""}</div>`;
 }
+function scheduleReviews(c, baseDate){
+ const checkpoints=[1,3,7,21];
+ c.studiedOn=baseDate;
+ c.reviews=checkpoints.map(n=>addDays(baseDate,n));
+ c.nextReview=c.reviews.find(d=>d>=dayKey())||null;
+}
 function renderSyllabus(){
  const list=document.getElementById("syllabusList");
- const total=db.chapters.length, mastered=db.chapters.filter(c=>c.status==="mastered").length, learning=db.chapters.filter(c=>c.status==="learning").length, left=total-mastered-learning;
- syTotal.textContent=(total?Math.round(mastered/total*100):0)+"%";syMastered.textContent=mastered;syLearning.textContent=learning;syLeft.textContent=Math.max(0,left);
- list.innerHTML=total?db.chapters.map(c=>`<div class="syllabus-row"><div class="row"><div class="chapter"><input type="checkbox" ${c.status==="mastered"?"checked":""} onchange="setChapterStatus('${c.id}',this.checked?'mastered':'learning')"><b>${esc(c.name)}</b></div><button class="btn mini" onclick="editChapter('${c.id}')">${esc(c.status)}</button></div><div class="muted" style="margin:5px 0 0 28px">${esc(subjectName(c.subjectId))}${c.nextReview?` • next review ${formatDate(c.nextReview)}`:""}</div></div>`).join(""):'<div class="empty">Add chapters to start tracking your syllabus.</div>';
+ const total=db.chapters.length, mastered=db.chapters.filter(c=>c.status==="mastered").length, learning=db.chapters.filter(c=>c.status==="learning").length, left=Math.max(0,total-mastered-learning);
+ syTotal.textContent=(total?Math.round(mastered/total*100):0)+"%";
+ syMastered.textContent=mastered;
+ syLearning.textContent=learning;
+ syLeft.textContent=left;
+
+ list.innerHTML=total?db.chapters.map(c=>`<div class="syllabus-row">
+  <div class="row"><div class="chapter"><input type="checkbox" ${c.status==="mastered"?"checked":""} onchange="setChapterStatus('${c.id}',this.checked?'mastered':'learning')"><b>${esc(c.name)}</b></div>
+  <button class="btn mini" onclick="editChapter('${c.id}')">${esc(c.status)}</button></div>
+  <div class="muted" style="margin:5px 0 0 28px">${esc(subjectName(c.subjectId))}${c.nextReview?` • next review ${formatDate(c.nextReview)}`:""}</div>
+ </div>`).join(""):'<div class="empty">Add chapters to start tracking your syllabus.</div>';
+
  const due=db.chapters.filter(c=>c.nextReview&&c.nextReview<=dayKey()).sort((a,b)=>a.nextReview.localeCompare(b.nextReview));
  revisionQueue.innerHTML=due.length?due.map(c=>`<div class="plan-item"><div class="plan-num">R</div><div><b>${esc(c.name)}</b><div class="muted">${esc(subjectName(c.subjectId))} • due ${formatDate(c.nextReview)}</div></div><button class="btn mini" onclick="completeRevision('${c.id}')">Done</button></div>`).join(""):'<div class="muted" style="margin-top:9px">No revisions due today.</div>';
 }
 function setChapterStatus(id,status){
  const c=db.chapters.find(x=>x.id===id);if(!c)return;
  c.status=status;
- if(status==="mastered"){c.studiedOn=dayKey();c.nextReview=addDays(c.studiedOn,21)}
- else if(status==="learning"&&!c.studiedOn){c.studiedOn=dayKey();c.nextReview=addDays(c.studiedOn,1)}
+ if(status==="mastered"){
+   scheduleReviews(c,dayKey());
+ }else if(status==="learning"){
+   if(!c.studiedOn)scheduleReviews(c,dayKey());
+   else c.nextReview=c.reviews?.find(d=>d>=dayKey())||addDays(dayKey(),1);
+ }else{
+   c.studiedOn=null;c.nextReview=null;c.reviews=[];
+ }
  save();renderSyllabus();renderReview();renderCalendar();showToast("Syllabus updated");
 }
 function addDays(iso,n){const d=new Date(iso+"T12:00:00");d.setDate(d.getDate()+n);return dayKey(d)}
 function completeRevision(id){
  const c=db.chapters.find(x=>x.id===id);if(!c)return;
- const todayK=dayKey(), checkpoints=[1,3,7,21], currentIndex=checkpoints.findIndex(x=>addDays(c.studiedOn||todayK,x)===c.nextReview);
- const next=checkpoints[Math.min(checkpoints.length-1,Math.max(0,currentIndex+1))];
- c.studiedOn=todayK;c.nextReview=addDays(todayK,next);save();renderSyllabus();renderCalendar();showToast("Revision recorded");
+ if(!c.reviews||!c.reviews.length)scheduleReviews(c,c.studiedOn||dayKey());
+ const idx=c.reviews.findIndex(d=>d===c.nextReview);
+ if(idx>=0 && idx<c.reviews.length-1)c.nextReview=c.reviews[idx+1];
+ else c.nextReview=null;
+ c.status="mastered";
+ save();renderSyllabus();renderCalendar();showToast(c.nextReview?"Revision recorded":"Revision cycle completed");
 }
 function addChapter(){
  openModal("Add chapter",`<div class="field"><label>Chapter / topic</label><input id="chapterName" placeholder="e.g. Human Physiology"></div><div class="field" style="margin-top:9px"><label>Subject</label><select id="chapterSubject">${db.subjects.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("")}</select></div><div class="actions"><button class="btn primary" onclick="createChapter()">Add</button></div>`);
@@ -434,7 +472,7 @@ function render(){
 function taskHTML(t){
  return `<div class="task ${t.completed?"done":""}">
  <input type="checkbox" ${t.completed?"checked":""} onchange="toggleTask('${t.id}',this.checked)">
- <div class="task-main"><div class="task-name">${esc(t.title)}</div><span class="tag">${esc(subjectName(t.subjectId))} • ${fmtMin(t.minutes)}</span></div>
+ <div class="task-main"><div class="task-name">${esc(t.title)}</div><span class="tag">${esc(subjectName(t.subjectId))} • ${fmtMin(t.minutes)} • ${formatDate(t.date||today())}</span></div>
  <div class="task-actions"><button class="btn mini" onclick="startTask('${t.id}')">Start</button><button class="btn mini" onclick="editTask('${t.id}')">Edit</button></div></div>`
 }
 function subjectCard(s,full=false,i=0){
@@ -475,18 +513,20 @@ function editTask(id){
  const t=db.tasks.find(x=>x.id===id);if(!t)return;
  openModal("Edit task",`<div class="field"><label>Task</label><input id="fTitle" value="${esc(t.title)}"></div>
  <div class="form-grid"><div class="field"><label>Planned minutes</label><input id="fMin" type="number" min="5" max="1440" step="5" value="${t.minutes}"></div>
+ <div class="field"><label>Study date</label><input id="fDate" type="date" value="${t.date||today()}"></div>
  <div class="field"><label>Subject</label><select id="fSub">${db.subjects.map(s=>`<option value="${s.id}" ${s.id===t.subjectId?"selected":""}>${esc(s.name)}</option>`).join("")}</select></div></div>
  <div class="actions"><button class="btn danger" onclick="deleteTask('${id}')">Delete</button><button class="btn primary" onclick="saveTask('${id}')">Save</button></div>`)
 }
-function saveTask(id){const t=db.tasks.find(x=>x.id===id);if(!t)return;t.title=fTitle.value.trim()||"Untitled task";t.minutes=Math.max(5,+fMin.value||5);t.subjectId=fSub.value;save();closeModal();render();showToast("Task updated")}
+function saveTask(id){const t=db.tasks.find(x=>x.id===id);if(!t)return;t.title=fTitle.value.trim()||"Untitled task";t.minutes=Math.max(5,+fMin.value||5);t.subjectId=fSub.value;t.date=fDate.value||today();save();closeModal();render();showToast("Task updated")}
 function deleteTask(id){db.tasks=db.tasks.filter(t=>t.id!==id);save();closeModal();render();showToast("Task deleted")}
 function addTask(){
  openModal("Add study task",`<div class="field"><label>What do you need to study?</label><input id="fTitle" placeholder="e.g. Physics — Current electricity"></div>
  <div class="form-grid"><div class="field"><label>Planned minutes</label><input id="fMin" type="number" min="5" max="1440" step="5" value="60"></div>
+ <div class="field"><label>Study date</label><input id="fDate" type="date" value="${today()}"></div>
  <div class="field"><label>Subject</label><select id="fSub">${db.subjects.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("")}</select></div></div>
  <div class="actions"><button class="btn primary" onclick="createTask()">Add task</button></div>`)
 }
-function createTask(){const title=fTitle.value.trim();if(!title){showToast("Enter a task name");return}db.tasks.push({id:crypto.randomUUID(),title,minutes:Math.max(5,+fMin.value||5),subjectId:fSub.value,completed:false,createdAt:new Date().toISOString()});save();closeModal();render();showToast("Task added")}
+function createTask(){const title=fTitle.value.trim();if(!title){showToast("Enter a task name");return}db.tasks.push({id:crypto.randomUUID(),title,minutes:Math.max(5,+fMin.value||5),subjectId:fSub.value,date:fDate.value||today(),completed:false,createdAt:new Date().toISOString()});save();closeModal();render();showToast("Task added")}
 quickAdd.onclick=addTask;addTaskBtn.onclick=addTask;
 
 function editTarget(){openModal("Total planned work",`<div class="notice">This is your daily study target. Your actual planned work is the sum of the tasks below.</div><div class="field" style="margin-top:10px"><label>Daily target (minutes)</label><input id="targetMin" type="number" min="30" max="960" step="15" value="${db.dailyTargetMin}"></div><div class="actions"><button class="btn primary" onclick="saveTarget()">Save target</button></div>`)}
@@ -506,7 +546,7 @@ function buildPlan(){
  if(priority.value==="weak"){
   const actual=actualBySubject();pool.sort((a,b)=>(actual[a.subjectId]||0)-(actual[b.subjectId]||0));
  }else if(priority.value==="urgent"){pool.sort((a,b)=>b.minutes-a.minutes)}
- else{pool.sort((a,b)=>a.createdAt.localeCompare(b.createdAt))}
+ else{pool.sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999") || a.createdAt.localeCompare(b.createdAt))}
  let left=available, chosen=[];for(const t of pool){if(left<=0)break;const m=Math.min(t.minutes,left);chosen.push({t,m});left-=m}
  planResult.innerHTML=chosen.length?`<div style="margin-top:14px">${chosen.map((x,i)=>`<div class="plan-item"><div class="plan-num">${i+1}</div><div><b>${esc(x.t.title)}</b><div class="muted">${esc(subjectName(x.t.subjectId))} • ${fmtMin(x.m)}</div></div></div>`).join("")}</div><div class="notice" style="margin-top:10px">${left>0?`You have ${fmtMin(left)} unfilled. Add another task or keep the buffer.`:"Plan filled to your available time."}</div>`:'<div class="empty">No unfinished tasks. Add some tasks first.</div>';
 }
@@ -551,8 +591,9 @@ function restoreTimer(){try{const x=JSON.parse(localStorage.getItem("studyProgre
 restoreTimer();
 
 function updateLogin(){loginBtn.textContent=db.username?("@"+db.username):"Login"}
-loginBtn.onclick=()=>openModal("Student profile",`<div class="notice">This prototype keeps your username and study records on this device. A production cloud account would need secure authentication and a clear privacy policy.</div><div class="field" style="margin-top:10px"><label>Username</label><input id="usernameInput" maxlength="30" value="${esc(db.username)}" placeholder="Choose a username"></div><div class="actions"><button class="btn primary" onclick="saveUsername()">Save profile</button></div>`)
+loginBtn.onclick=()=>openModal("Student profile",`<div class="notice">This prototype keeps your username and study records on this device. A production cloud account would need secure authentication and a clear privacy policy.</div><div class="field" style="margin-top:10px"><label>Username</label><input id="usernameInput" maxlength="30" value="${esc(db.username)}" placeholder="Choose a username"></div><div class="actions"><button class="btn danger" onclick="resetAllStudyData()">Reset study data</button><button class="btn primary" onclick="saveUsername()">Save profile</button></div>`)
 function saveUsername(){db.username=usernameInput.value.trim().replace(/\s+/g," ").slice(0,30);save();closeModal();render();showToast("Profile saved")}
+function resetAllStudyData(){if(!confirm("Reset all study data on this device?"))return;localStorage.removeItem(KEY);db=structuredClone(defaultDB);save();closeModal();render();showToast("Study data reset")}
 
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".page").forEach(x=>x.classList.toggle("active",x.id===b.dataset.page));if(b.dataset.page==="analytics")renderAnalytics();if(b.dataset.page==="syllabus")renderSyllabus();if(b.dataset.page==="calendar")renderCalendar();if(b.dataset.page==="review")renderReview()});
 
@@ -562,6 +603,20 @@ document.getElementById("addChapter").onclick=addChapter;
 window.calMonth=new Date();
 document.getElementById("prevMonth").onclick=()=>{window.calMonth.setMonth(window.calMonth.getMonth()-1);renderCalendar()};
 document.getElementById("nextMonth").onclick=()=>{window.calMonth.setMonth(window.calMonth.getMonth()+1);renderCalendar()};
+
+
+/* v2.0 data migration */
+db.tasks.forEach(t=>{
+  if(!t.date)t.date=t.createdAt?String(t.createdAt).slice(0,10):today();
+});
+db.chapters.forEach(c=>{
+  if(c.status==="not started")c.status="not-started";
+  if(c.status==="not-started" && c.nextReview){c.nextReview=null;}
+  if(c.status==="mastered" && c.studiedOn && (!Array.isArray(c.reviews)||!c.reviews.length)){
+    scheduleReviews(c,c.studiedOn);
+  }
+});
+save();
 
 todayLabel.textContent=new Date().toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});
 render();updateTimerUI();
