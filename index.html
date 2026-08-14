@@ -197,7 +197,7 @@ body.dark .metric-grid .metric{min-height:82px}
    <div id="quickPlanResult" class="smart-box"><b>Ready when you are.</b><div class="muted" style="margin-top:5px">Uses your unfinished tasks and subject balance.</div></div>
   </div>
   <div class="card">
-   <div class="row"><div><div class="section-title">Exam countdown</div><div class="muted">Keep your deadline visible.</div></div><button class="btn mini" id="examEdit">Edit</button></div>
+   <div class="row"><div><div class="section-title">Exam countdown</div><div class="muted">Set and change the exam name or date whenever you need.</div></div><button class="btn mini" id="examEdit">Edit</button></div>
    <div id="examBox" style="margin-top:12px"><div class="empty">No exam date set.</div></div>
   </div>
  </div>
@@ -359,9 +359,19 @@ function daysUntil(iso){
 }
 function renderExam(){
  const box=document.getElementById("examBox");
- if(!db.exam){box.innerHTML='<div class="empty">No exam date set.</div>';return}
+ if(!db.exam){
+  box.innerHTML='<div class="empty">No exam set yet.<br><button class="btn primary" style="margin-top:10px" onclick="editExam()">+ Add exam</button></div>';
+  return;
+ }
  const n=daysUntil(db.exam.date);
- box.innerHTML=`<div style="font-size:36px;font-weight:950">${n<0?"Past":n}</div><div style="font-weight:850">${esc(db.exam.name)}</div><div class="muted">${formatDate(db.exam.date)} ${n>=0?`• ${n} day${n===1?"":"s"} remaining`:""}</div>`;
+ const safeName=esc(db.exam.name||"My exam");
+ box.innerHTML=`
+  <div style="font-size:36px;font-weight:950">${n<0?"Past":n}</div>
+  <div style="font-weight:850;font-size:18px">${safeName}</div>
+  <div class="muted">${formatDate(db.exam.date)} ${n>=0?`• ${n} day${n===1?"":"s"} remaining`:""}</div>
+  <div class="chips" style="margin-top:12px">
+   <button class="btn mini" onclick="editExam()">Edit name / date</button>
+  </div>`;
 }
 function scheduleReviews(c, baseDate){
  const checkpoints=[1,3,7,21];
@@ -420,10 +430,52 @@ function editChapter(id){
 function saveChapter(id){const c=db.chapters.find(x=>x.id===id);if(!c)return;c.name=chapterName.value.trim()||c.name;c.subjectId=chapterSubject.value;save();closeModal();renderSyllabus();renderCalendar();showToast("Chapter updated")}
 function deleteChapter(id){db.chapters=db.chapters.filter(c=>c.id!==id);save();closeModal();renderSyllabus();renderCalendar();showToast("Chapter deleted")}
 function editExam(){
- openModal("Exam countdown",`<div class="field"><label>Exam name</label><input id="examName" value="${esc(db.exam?.name||"My exam")}" placeholder="e.g. NEET UG"></div><div class="field" style="margin-top:9px"><label>Exam date</label><input id="examDate" type="date" value="${db.exam?.date||""}"></div><div class="actions"><button class="btn danger" onclick="clearExam()">Clear</button><button class="btn primary" onclick="saveExam()">Save</button></div>`);
+ const current=db.exam||{};
+ const todayIso=dayKey();
+ openModal("Edit exam",`
+  <div class="notice" style="margin-bottom:12px">
+   Change the exam name and date anytime. The countdown and calendar update automatically.
+  </div>
+  <div class="field">
+   <label>Exam name</label>
+   <input id="examName" type="text" maxlength="80" value="${esc(current.name||"")}" placeholder="e.g. NEET UG 2027">
+  </div>
+  <div class="field" style="margin-top:9px">
+   <label>Exam date</label>
+   <input id="examDate" type="date" min="${todayIso}" value="${current.date||""}">
+  </div>
+  <div id="examPreview" class="smart-box" style="margin-top:12px">
+   <b>Preview</b><div class="muted" id="examPreviewText" style="margin-top:5px">Choose a date.</div>
+  </div>
+  <div class="actions">
+   ${db.exam?'<button class="btn danger" onclick="clearExam()">Delete exam</button>':""}
+   <button class="btn primary" onclick="saveExam()">Save exam</button>
+  </div>
+ `);
+ const updatePreview=()=>{
+  const d=document.getElementById("examDate")?.value;
+  const n=d?daysUntil(d):null;
+  const name=document.getElementById("examName")?.value.trim()||"My exam";
+  const p=document.getElementById("examPreviewText");
+  if(p)p.textContent=d?`${name} • ${formatDate(d)} • ${n<0?"Past":n+" day"+(n===1?"":"s")+" remaining"}`:"Choose a date.";
+ };
+ document.getElementById("examName")?.addEventListener("input",updatePreview);
+ document.getElementById("examDate")?.addEventListener("change",updatePreview);
+ updatePreview();
 }
-function saveExam(){if(!examDate.value){showToast("Choose an exam date");return}db.exam={name:examName.value.trim()||"My exam",date:examDate.value};save();closeModal();renderExam();renderCalendar();showToast("Exam countdown saved")}
-function clearExam(){db.exam=null;save();closeModal();renderExam();renderCalendar();showToast("Exam removed")}
+function saveExam(){
+ const name=document.getElementById("examName")?.value.trim();
+ const date=document.getElementById("examDate")?.value;
+ if(!name){showToast("Enter an exam name");return}
+ if(!date){showToast("Choose an exam date");return}
+ if(date<dayKey()){showToast("Choose today or a future date");return}
+ db.exam={name,date};
+ save();closeModal();renderExam();renderCalendar();showToast("Exam updated");
+}
+function clearExam(){
+ if(!confirm("Delete this exam countdown?"))return;
+ db.exam=null;save();closeModal();renderExam();renderCalendar();showToast("Exam removed");
+}
 function renderCalendar(){
  const now=window.calMonth||new Date();const y=now.getFullYear(),m=now.getMonth();monthLabel.textContent=now.toLocaleDateString(undefined,{month:"long",year:"numeric"});
  const first=new Date(y,m,1),last=new Date(y,m+1,0),start=(first.getDay()+6)%7;
