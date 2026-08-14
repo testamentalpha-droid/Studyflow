@@ -123,7 +123,7 @@ body.dark .metric-grid .metric{min-height:82px}
 <body>
 <div class="app">
 <header>
- <div class="brand"><div class="logo">S</div><div><h1>Study Progress <span class="version-badge">v2.0</span></h1><small>Student dashboard</small></div></div>
+ <div class="brand"><div class="logo">S</div><div><h1>Study Progress <span class="version-badge">v3.1</span></h1><small>Student dashboard</small></div></div>
  <div class="top-actions"><button class="btn theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode"><span class="theme-icon">🌙</span><span class="theme-label">Dark mode</span></button><button class="btn" id="quickAdd">Quick add</button><button class="btn primary" id="loginBtn">Login</button></div>
 </header>
 
@@ -135,6 +135,7 @@ body.dark .metric-grid .metric{min-height:82px}
  <button class="tab" data-page="syllabus">Syllabus</button>
  <button class="tab" data-page="calendar">Calendar</button>
  <button class="tab" data-page="review">Review</button>
+ <button class="tab" data-page="admin">Admin</button>
 </div>
 
 <section class="page active" id="dashboard">
@@ -290,6 +291,87 @@ body.dark .metric-grid .metric{min-height:82px}
  </div>
 </section>
 
+
+<section class="page" id="admin">
+ <div class="grid2">
+  <div class="card">
+   <div class="section-title">Book Recommendations Admin</div>
+   <p class="muted">Add the books you want Studyflow to recommend. Each book can have its own approved affiliate URL.</p>
+   <div class="notice" style="margin-top:12px">
+    <b>Important:</b> Use only affiliate links issued by the retailer/affiliate program you are actually enrolled in. Never enter an account password, API secret, or payment information here.
+   </div>
+
+   <div class="form-grid" style="margin-top:14px">
+    <div class="field">
+     <label>Exam</label>
+     <select id="adminBookExam">
+      <option value="NEET">NEET UG</option>
+      <option value="JEE">JEE Main / Advanced</option>
+      <option value="MHT-CET">MHT-CET</option>
+      <option value="BOARD">Board exams</option>
+      <option value="CUET">CUET</option>
+      <option value="OTHER">Other / custom</option>
+     </select>
+    </div>
+    <div class="field">
+     <label>Subject</label>
+     <input id="adminBookSubject" maxlength="60" placeholder="e.g. Biology">
+    </div>
+    <div class="field">
+     <label>Book name</label>
+     <input id="adminBookTitle" maxlength="140" placeholder="e.g. NEET Chapterwise PYQs">
+    </div>
+    <div class="field">
+     <label>Purpose / why recommend it</label>
+     <input id="adminBookWhy" maxlength="220" placeholder="e.g. Best for chapterwise question practice">
+    </div>
+    <div class="field">
+     <label>Product URL</label>
+     <input id="adminBookUrl" type="url" placeholder="https://...">
+    </div>
+    <div class="field">
+     <label>Affiliate URL</label>
+     <input id="adminBookAffiliate" type="url" placeholder="https://...your approved tracking link...">
+    </div>
+   </div>
+   <div class="actions" style="margin-top:10px">
+    <button class="btn primary" id="adminAddBook">Add book</button>
+    <button class="btn" id="adminImportCsv">Import CSV</button>
+    <button class="btn" id="adminExportCsv">Export CSV</button>
+    <button class="btn" id="adminClearBooks">Clear all custom books</button>
+    <input id="adminCsvFile" type="file" accept=".csv,text/csv" style="display:none">
+   </div>
+  </div>
+
+  <div class="card">
+   <div class="section-title">How the system works</div>
+   <div class="notice" style="margin-top:12px">
+    <b>1. User selects exam</b><br>
+    Studyflow identifies the relevant book category.<br><br>
+    <b>2. Planner reads the situation</b><br>
+    Exam date, syllabus remaining, weak areas and question target affect recommendations.<br><br>
+    <b>3. Studyflow recommends a resource</b><br>
+    The user sees the book and why it is useful.<br><br>
+    <b>4. User taps View book</b><br>
+    The button uses your affiliate URL when one has been configured.<br><br>
+    <b>5. Retailer handles attribution</b><br>
+    Commission is paid according to the affiliate program's terms.
+   </div>
+  </div>
+ </div>
+
+ <div class="card" style="margin-top:16px">
+  <div class="row">
+   <div>
+    <div class="section-title">Your custom book catalog</div>
+    <div class="muted">These are stored on this device in the current prototype.</div>
+   </div>
+   <span class="tag" id="adminBookCount">0 books</span>
+  </div>
+  <div id="adminBookList" style="margin-top:12px"></div>
+ </div>
+</section>
+
 <section class="page" id="analytics">
  <div class="card">
   <div class="row"><div><div class="section-title">Real weekly analytics</div><div class="muted">Calculated from tasks and completed focus sessions on this device.</div></div><span class="tag">LIVE</span></div>
@@ -369,6 +451,8 @@ const defaultDB={
  plannerProfile:{examType:"NEET",manualSyllabusRemaining:50}
 };
 let db=load();
+db.bookCatalog = Array.isArray(db.bookCatalog) ? db.bookCatalog : [];
+
 let timer={mode:"focus",focusMin:50,breakMin:10,remaining:3000,running:false,endAt:0,startedAt:0,subjectId:null,taskId:null};
 let timerInterval=null;
 
@@ -586,7 +670,7 @@ function render(){
  }
  subjectCards.innerHTML=db.subjects.map(subjectCard).join("");
  subjectsFull.innerHTML=db.subjects.map((s,i)=>subjectCard(s,true,i)).join("");
- drawWeek(weekChart);drawWeek(analyticsChart);renderAnalytics();renderExam();renderSyllabus();renderReview();renderCalendar();
+ drawWeek(weekChart);drawWeek(analyticsChart);renderAnalytics();renderExam();renderSyllabus();renderReview();renderCalendar();renderAdminBooks();
  updateLogin();
  if(document.getElementById("plannerExamType")) initSmartPlanner();
 }
@@ -774,21 +858,201 @@ function buildRoutine(){
 }
 
 function renderBooks(type){
- const items=BOOKS[type]||BOOKS.OTHER;
+ const custom=(db.bookCatalog||[]).filter(b=>b.exam===type);
+ const fallback=BOOKS[type]||BOOKS.OTHER;
+ const items=custom.length?custom:fallback;
  const box=document.getElementById("bookRecommendations");
  if(!box)return;
- box.innerHTML=items.map((b,i)=>`
+ box.innerHTML=items.map((b,i)=>{
+   const href=b.affiliateUrl||b.productUrl||`https://www.amazon.in/s?k=${encodeURIComponent(b.search||b.title)}`;
+   return `<div class="plan-item">
+    <div class="plan-num">${i+1}</div>
+    <div style="flex:1">
+     <b>${esc(b.title)}</b>
+     ${b.subject?`<span class="tag" style="margin-left:6px">${esc(b.subject)}</span>`:""}
+     <div class="muted">${esc(b.why)}</div>
+     <a class="btn mini" target="_blank" rel="noopener noreferrer" href="${esc(href)}">View book</a>
+    </div>
+   </div>`;
+ }).join("")+
+ `<div class="muted" style="font-size:12px;margin-top:10px">
+   ${custom.length?"Showing your custom catalog for this exam.":"Showing built-in suggestions until you add custom books in Admin."}
+   Affiliate disclosure should be displayed wherever required by the program and applicable law.
+  </div>`;
+}
+
+function renderAdminBooks(){
+ const list=document.getElementById("adminBookList");
+ const count=document.getElementById("adminBookCount");
+ if(!list||!count)return;
+ const books=db.bookCatalog||[];
+ count.textContent=`${books.length} book${books.length===1?"":"s"}`;
+ if(!books.length){
+  list.innerHTML='<div class="empty">No custom books yet. Add your first recommendation above.</div>';
+  return;
+ }
+ list.innerHTML=books.map(b=>`
   <div class="plan-item">
-   <div class="plan-num">${i+1}</div>
+   <div class="plan-num">${esc(b.exam)}</div>
    <div style="flex:1">
     <b>${esc(b.title)}</b>
-    <div class="muted">${esc(b.why)}</div>
-    <a class="btn mini" target="_blank" rel="noopener noreferrer"
-       href="https://www.amazon.in/s?k=${encodeURIComponent(b.search)}">View book options</a>
+    <div class="muted">${esc(b.subject||"General")} • ${esc(b.why||"")}</div>
+    <div class="muted" style="font-size:12px;word-break:break-all;margin-top:4px">
+      ${b.affiliateUrl?"Affiliate link configured":"No affiliate link configured"}
+    </div>
+   </div>
+   <div class="actions">
+    <button class="btn mini" onclick="editAdminBook('${b.id}')">Edit</button>
+    <button class="btn mini danger" onclick="deleteAdminBook('${b.id}')">Delete</button>
    </div>
   </div>
- `).join("")+`<div class="muted" style="font-size:12px;margin-top:10px">Book links are currently standard search links. Commission only applies after the site is connected to an approved affiliate program and its official affiliate links.</div>`;
+ `).join("");
 }
+
+function addAdminBook(){
+ const exam=document.getElementById("adminBookExam")?.value||"OTHER";
+ const subject=document.getElementById("adminBookSubject")?.value.trim()||"General";
+ const title=document.getElementById("adminBookTitle")?.value.trim();
+ const why=document.getElementById("adminBookWhy")?.value.trim();
+ const productUrl=document.getElementById("adminBookUrl")?.value.trim();
+ const affiliateUrl=document.getElementById("adminBookAffiliate")?.value.trim();
+ if(!title){showToast("Enter a book name");return}
+ if(affiliateUrl && !/^https?:\/\//i.test(affiliateUrl)){showToast("Affiliate URL must start with https:// or http://");return}
+ if(productUrl && !/^https?:\/\//i.test(productUrl)){showToast("Product URL must start with https:// or http://");return}
+ db.bookCatalog.push({id:crypto.randomUUID(),exam,subject,title,why,
+   productUrl,affiliateUrl});
+ save();renderAdminBooks();renderBooks(plannerExamType());
+ ["adminBookSubject","adminBookTitle","adminBookWhy","adminBookUrl","adminBookAffiliate"].forEach(id=>{
+   const el=document.getElementById(id);if(el)el.value="";
+ });
+ showToast("Book recommendation added");
+}
+
+function editAdminBook(id){
+ const b=(db.bookCatalog||[]).find(x=>x.id===id);if(!b)return;
+ openModal("Edit book recommendation",`
+  <div class="field"><label>Exam</label><select id="editBookExam">
+   ${["NEET","JEE","MHT-CET","BOARD","CUET","OTHER"].map(x=>`<option value="${x}" ${b.exam===x?"selected":""}>${x}</option>`).join("")}
+  </select></div>
+  <div class="field"><label>Subject</label><input id="editBookSubject" value="${esc(b.subject||"")}"></div>
+  <div class="field"><label>Book name</label><input id="editBookTitle" value="${esc(b.title||"")}"></div>
+  <div class="field"><label>Why recommend it</label><input id="editBookWhy" value="${esc(b.why||"")}"></div>
+  <div class="field"><label>Product URL</label><input id="editBookUrl" type="url" value="${esc(b.productUrl||"")}"></div>
+  <div class="field"><label>Affiliate URL</label><input id="editBookAffiliate" type="url" value="${esc(b.affiliateUrl||"")}"></div>
+  <div class="actions">
+   <button class="btn primary" onclick="saveAdminBook('${id}')">Save</button>
+  </div>
+ `);
+}
+
+function saveAdminBook(id){
+ const b=(db.bookCatalog||[]).find(x=>x.id===id);if(!b)return;
+ const au=document.getElementById("editBookAffiliate")?.value.trim()||"";
+ const pu=document.getElementById("editBookUrl")?.value.trim()||"";
+ if(au && !/^https?:\/\//i.test(au)){showToast("Affiliate URL must start with https:// or http://");return}
+ if(pu && !/^https?:\/\//i.test(pu)){showToast("Product URL must start with https:// or http://");return}
+ b.exam=document.getElementById("editBookExam").value;
+ b.subject=document.getElementById("editBookSubject").value.trim()||"General";
+ b.title=document.getElementById("editBookTitle").value.trim()||b.title;
+ b.why=document.getElementById("editBookWhy").value.trim();
+ b.productUrl=pu;b.affiliateUrl=au;
+ save();closeModal();renderAdminBooks();renderBooks(plannerExamType());showToast("Book recommendation updated");
+}
+
+function deleteAdminBook(id){
+ if(!confirm("Delete this book recommendation?"))return;
+ db.bookCatalog=(db.bookCatalog||[]).filter(x=>x.id!==id);
+ save();renderAdminBooks();renderBooks(plannerExamType());showToast("Book deleted");
+}
+
+function clearAdminBooks(){
+ if(!(db.bookCatalog||[]).length){showToast("No custom books to clear");return}
+ if(!confirm("Delete all custom book recommendations on this device?"))return;
+ db.bookCatalog=[];save();renderAdminBooks();renderBooks(plannerExamType());showToast("Custom catalog cleared");
+}
+
+
+function csvEscape(v){
+ return '"' + String(v??"").replace(/"/g,'""') + '"';
+}
+function exportBookCsv(){
+ const rows=[["exam","subject","book","why","product_url","affiliate_url"]];
+ (db.bookCatalog||[]).forEach(b=>rows.push([b.exam,b.subject,b.title,b.why,b.productUrl,b.affiliateUrl]));
+ const csv=rows.map(r=>r.map(csvEscape).join(",")).join("\r\n");
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="studyflow-book-catalog.csv";
+ document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(a.href),500);
+ showToast("Book catalog exported");
+}
+function parseCsvLine(line){
+ const out=[];let cur="",quoted=false;
+ for(let i=0;i<line.length;i++){
+  const ch=line[i];
+  if(ch==='"'){
+   if(quoted && line[i+1]==='"'){cur+='"';i++;}
+   else quoted=!quoted;
+  }else if(ch===',' && !quoted){out.push(cur);cur="";}
+  else cur+=ch;
+ }
+ out.push(cur);return out;
+}
+function importBookCsv(file){
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const lines=String(reader.result||"").replace(/^\uFEFF/,"").split(/\r?\n/).filter(x=>x.trim());
+   if(lines.length<2){showToast("CSV has no book rows");return}
+   const headers=parseCsvLine(lines[0]).map(x=>x.trim().toLowerCase());
+   const required=["exam","subject","book","why","product_url","affiliate_url"];
+   if(!required.every(x=>headers.includes(x))){
+    showToast("CSV needs: exam, subject, book, why, product_url, affiliate_url");return;
+   }
+   const idx=Object.fromEntries(headers.map((h,i)=>[h,i]));
+   const imported=[];
+   for(let i=1;i<lines.length;i++){
+    const r=parseCsvLine(lines[i]);
+    const title=(r[idx.book]||"").trim();
+    if(!title)continue;
+    const affiliate=(r[idx.affiliate_url]||"").trim();
+    const product=(r[idx.product_url]||"").trim();
+    if(affiliate && !/^https?:\/\//i.test(affiliate))continue;
+    if(product && !/^https?:\/\//i.test(product))continue;
+    imported.push({
+      id:crypto.randomUUID(),
+      exam:(r[idx.exam]||"OTHER").trim().toUpperCase(),
+      subject:(r[idx.subject]||"General").trim(),
+      title,why:(r[idx.why]||"").trim(),
+      productUrl:product,affiliateUrl:affiliate
+    });
+   }
+   if(!imported.length){showToast("No valid book rows found");return}
+   db.bookCatalog=[...(db.bookCatalog||[]),...imported];
+   save();renderAdminBooks();renderBooks(plannerExamType());
+   showToast(`Imported ${imported.length} book${imported.length===1?"":"s"}`);
+  }catch(e){showToast("Could not read that CSV")}
+ };
+ reader.readAsText(file);
+}
+
+function initBookAdmin(){
+ if(window.__bookAdminInitialized)return;
+ window.__bookAdminInitialized=true;
+ document.getElementById("adminAddBook")?.addEventListener("click",addAdminBook);
+ document.getElementById("adminClearBooks")?.addEventListener("click",clearAdminBooks);
+ document.getElementById("adminImportCsv")?.addEventListener("click",()=>{
+   document.getElementById("adminCsvFile")?.click();
+ });
+ document.getElementById("adminCsvFile")?.addEventListener("change",e=>{
+   const file=e.target.files?.[0]; if(file) importBookCsv(file);
+   e.target.value="";
+ });
+ document.getElementById("adminExportCsv")?.addEventListener("click",exportBookCsv);
+ renderAdminBooks();
+}
+initBookAdmin();
 
 function savePlannerProfile(){
  db.plannerProfile=db.plannerProfile||{};
