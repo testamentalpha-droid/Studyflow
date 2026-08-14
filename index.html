@@ -212,21 +212,81 @@ body.dark .metric-grid .metric{min-height:82px}
 </section>
 
 <section class="page" id="planner">
- <div class="grid2">
-  <div class="card">
-   <div class="section-title">Build a practical plan</div>
-   <p class="muted">Choose your available time and priority. The plan uses your real task estimates.</p>
-   <div class="form-grid">
-    <div class="field"><label>Available hours</label><input id="availableHours" type="number" min="0.5" max="16" step="0.5" value="6"></div>
-    <div class="field"><label>Priority</label><select id="priority"><option value="urgent">Closest exam / deadline</option><option value="weak">Weakest subject first</option><option value="balanced">Balanced</option></select></div>
+ <div class="card">
+  <div class="row">
+   <div>
+    <div class="section-title">Smart exam planner</div>
+    <div class="muted">Tell Studyflow what exam you are preparing for, how much syllabus remains, and how close the exam is. It turns that into a realistic daily routine.</div>
    </div>
-   <button class="btn primary" style="margin-top:10px" id="buildPlan">Build plan</button>
-   <div id="planResult"></div>
+   <span class="tag">SMART PLAN</span>
+  </div>
+
+  <div class="form-grid" style="margin-top:14px">
+   <div class="field">
+    <label>Exam type</label>
+    <select id="plannerExamType">
+     <option value="NEET">NEET UG</option>
+     <option value="JEE">JEE Main / Advanced</option>
+     <option value="MHT-CET">MHT-CET</option>
+     <option value="BOARD">Board exams</option>
+     <option value="CUET">CUET</option>
+     <option value="OTHER">Other / custom</option>
+    </select>
+   </div>
+   <div class="field">
+    <label>Syllabus remaining (%)</label>
+    <input id="plannerSyllabus" type="number" min="0" max="100" step="1" value="50">
+    <div class="muted" style="font-size:12px;margin-top:3px">If you have chapters in Syllabus, Studyflow can calculate this automatically.</div>
+   </div>
+   <div class="field">
+    <label>Realistic study time / day (hours)</label>
+    <input id="availableHours" type="number" min="0.5" max="16" step="0.5" value="6">
+   </div>
+   <div class="field">
+    <label>Planning style</label>
+    <select id="priority">
+     <option value="urgent">Exam pressure first</option>
+     <option value="weak">Weakest subject first</option>
+     <option value="balanced">Balanced coverage</option>
+     <option value="practice">Questions + revision first</option>
+    </select>
+   </div>
+  </div>
+
+  <div id="smartPlanSummary" class="smart-box" style="margin-top:14px"></div>
+  <div class="actions" style="margin-top:10px">
+   <button class="btn primary" id="buildPlan">Build my routine</button>
+   <button class="btn mini" id="savePlannerProfile">Save settings</button>
+  </div>
+  <div id="planResult"></div>
+ </div>
+
+ <div class="grid2" style="margin-top:16px">
+  <div class="card">
+   <div class="section-title">What your routine will calculate</div>
+   <div class="notice" style="margin-top:12px">
+    <b>1. Exam urgency</b><br>Less time remaining means more revision and timed practice.<br><br>
+    <b>2. Syllabus load</b><br>More unfinished syllabus means more learning blocks before full revision.<br><br>
+    <b>3. Question practice</b><br>The plan increases practice as the exam gets closer and allocates it by exam type.<br><br>
+    <b>4. Daily workload</b><br>It stays inside the hours you say you can realistically study.
+   </div>
   </div>
   <div class="card">
-   <div class="section-title">How it works</div>
-   <div class="notice" style="margin-top:12px">1. Add tasks with estimated minutes.<br><br>2. Set the amount of work you can realistically do.<br><br>3. Start a focus block from any task.<br><br>4. Actual time feeds the weekly analytics.</div>
+   <div class="section-title">Books & resources</div>
+   <p class="muted">Studyflow can show exam-specific resources after you choose the exam type. Book buttons can later be connected to your approved affiliate links.</p>
+   <div id="bookRecommendations"></div>
   </div>
+ </div>
+
+ <div class="card" style="margin-top:16px">
+  <div class="row">
+   <div>
+    <div class="section-title">Your study tasks</div>
+    <div class="muted">The routine can also use these real tasks.</div>
+   </div>
+   <button class="btn primary" onclick="addTask()">+ Add task</button>
+  </div>
+  <div id="plannerTasks" style="margin-top:12px"></div>
  </div>
 </section>
 
@@ -305,7 +365,8 @@ const defaultDB={
  ],
  tasks:[],
  days:{},
- sessions:[],chapters:[],exam:null
+ sessions:[],chapters:[],exam:null,
+ plannerProfile:{examType:"NEET",manualSyllabusRemaining:50}
 };
 let db=load();
 let timer={mode:"focus",focusMin:50,breakMin:10,remaining:3000,running:false,endAt:0,startedAt:0,subjectId:null,taskId:null};
@@ -315,7 +376,7 @@ function load(){
  try{
   const x=JSON.parse(localStorage.getItem(KEY)||"null");
   if(!x)return structuredClone(defaultDB);
-  return {...structuredClone(defaultDB),...x,subjects:x.subjects||[],tasks:x.tasks||[],days:x.days||{},sessions:x.sessions||[],chapters:x.chapters||[],exam:x.exam||null};
+  return {...structuredClone(defaultDB),...x,subjects:x.subjects||[],tasks:x.tasks||[],days:x.days||{},sessions:x.sessions||[],chapters:x.chapters||[],exam:x.exam||null,plannerProfile:{...structuredClone(defaultDB.plannerProfile),...(x.plannerProfile||{})}};
  }catch(e){return structuredClone(defaultDB)}
 }
 function save(){localStorage.setItem(KEY,JSON.stringify(db))}
@@ -515,11 +576,19 @@ function render(){
  let streak=0;for(let i=0;i<365;i++){let d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-i);if(actualForDay(dayKey(d))>0)streak++;else break}document.getElementById("streak").textContent=streak;
  const next=db.tasks.find(t=>!t.deleted&&!t.completed);
  nextUp.textContent=next?next.title:"All tasks complete";nextMeta.textContent=next?`${subjectName(next.subjectId)} • ${fmtMin(next.minutes)}`:"Add another task when you need one.";nextStart.style.display=next?"inline-block":"none";
- taskList.innerHTML=db.tasks.filter(t=>!t.deleted).length?db.tasks.filter(t=>!t.deleted).map((t,i)=>taskHTML(t)).join(""):'<div class="empty">No tasks yet. Add your first study task.</div>';
+ const visibleTasks=db.tasks.filter(t=>!t.deleted);
+ taskList.innerHTML=visibleTasks.length?visibleTasks.map((t,i)=>taskHTML(t)).join(""):'<div class="empty">No tasks yet. Add your first study task.</div>';
+ const plannerTasks=document.getElementById("plannerTasks");
+ if(plannerTasks){
+  plannerTasks.innerHTML=visibleTasks.length
+   ? visibleTasks.map(t=>taskHTML(t)).join("")
+   : '<div class="empty">No tasks yet. Tap <b>+ Add task</b> to create your first task. The planner will use it when you press <b>Build plan</b>.</div>';
+ }
  subjectCards.innerHTML=db.subjects.map(subjectCard).join("");
  subjectsFull.innerHTML=db.subjects.map((s,i)=>subjectCard(s,true,i)).join("");
  drawWeek(weekChart);drawWeek(analyticsChart);renderAnalytics();renderExam();renderSyllabus();renderReview();renderCalendar();
  updateLogin();
+ if(document.getElementById("plannerExamType")) initSmartPlanner();
 }
 function taskHTML(t){
  return `<div class="task ${t.completed?"done":""}">
@@ -592,17 +661,159 @@ function saveSubject(id){const s=db.subjects.find(x=>x.id===id);if(!s)return;s.n
 function removeSubject(id){if(db.tasks.some(t=>t.subjectId===id)){showToast("Move or delete its tasks first");return}db.subjects=db.subjects.filter(s=>s.id!==id);save();closeModal();render();showToast("Subject deleted")}
 addSubject.onclick=addSubject2.onclick=addSubject;
 
-function buildPlan(){
- const available=Math.max(.5,Math.min(16,+availableHours.value||6))*60;
- let pool=db.tasks.filter(t=>!t.completed&&!t.deleted).slice();
- if(priority.value==="weak"){
-  const actual=actualBySubject();pool.sort((a,b)=>(actual[a.subjectId]||0)-(actual[b.subjectId]||0));
- }else if(priority.value==="urgent"){pool.sort((a,b)=>b.minutes-a.minutes)}
- else{pool.sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999") || a.createdAt.localeCompare(b.createdAt))}
- let left=available, chosen=[];for(const t of pool){if(left<=0)break;const m=Math.min(t.minutes,left);chosen.push({t,m});left-=m}
- planResult.innerHTML=chosen.length?`<div style="margin-top:14px">${chosen.map((x,i)=>`<div class="plan-item"><div class="plan-num">${i+1}</div><div><b>${esc(x.t.title)}</b><div class="muted">${esc(subjectName(x.t.subjectId))} • ${fmtMin(x.m)}</div></div></div>`).join("")}</div><div class="notice" style="margin-top:10px">${left>0?`You have ${fmtMin(left)} unfilled. Add another task or keep the buffer.`:"Plan filled to your available time."}</div>`:'<div class="empty">No unfinished tasks. Add some tasks first.</div>';
+const BOOKS = {
+ NEET:[
+  {title:"NCERT Biology Class 11 & 12",why:"Core biology text; revise diagrams, tables and lines repeatedly.",search:"NCERT Biology Class 11 12"},
+  {title:"MTG 38 Years NEET Chapterwise Topicwise Solved Papers",why:"Useful for chapterwise previous-question practice.",search:"MTG 38 Years NEET Chapterwise Topicwise Solved Papers"},
+  {title:"MTG NEET Guide / Objective practice",why:"Extra MCQ practice after your core syllabus and PYQs.",search:"MTG NEET objective practice book"}
+ ],
+ JEE:[
+  {title:"NCERT Chemistry Class 11 & 12",why:"Important foundation/reference for JEE Chemistry.",search:"NCERT Chemistry Class 11 12"},
+  {title:"JEE Main Chapterwise Previous Year Questions",why:"Prioritise real exam-style questions.",search:"JEE Main chapterwise previous year questions book"},
+  {title:"Cengage JEE practice series",why:"Use selectively for deeper problem practice after basics.",search:"Cengage JEE practice books"}
+ ],
+ "MHT-CET":[
+  {title:"MHT-CET Previous Year Questions",why:"Focus on the actual question pattern and time pressure.",search:"MHT CET previous year questions book"},
+  {title:"MHT-CET Chapterwise MCQ practice",why:"Good for high-volume timed MCQ practice.",search:"MHT CET chapterwise MCQ practice book"},
+  {title:"MHT-CET mock test book",why:"Use full mocks during the final phase.",search:"MHT CET mock test book"}
+ ],
+ BOARD:[
+  {title:"NCERT / State Board textbooks",why:"Start with your prescribed textbook and its exercises.",search:"Maharashtra State Board textbooks"},
+  {title:"Board previous-year question papers",why:"Learn recurring patterns and answer-writing requirements.",search:"board exam previous year question papers book"},
+  {title:"Board sample papers / mock papers",why:"Use timed papers after completing the core chapters.",search:"board exam sample papers book"}
+ ],
+ CUET:[
+  {title:"CUET previous-year / practice questions",why:"Build speed with the question style used in your target subjects.",search:"CUET previous year questions book"},
+  {title:"CUET subject-wise practice",why:"Target weak topics instead of collecting too many books.",search:"CUET subject wise practice book"},
+  {title:"CUET mock test book",why:"Use timed mocks closer to the exam.",search:"CUET mock test book"}
+ ],
+ OTHER:[
+  {title:"Official syllabus + previous papers",why:"The safest starting point for any exam.",search:"exam previous year question papers book"},
+  {title:"Subject-wise practice book",why:"Choose one focused practice resource for your weakest subject.",search:"competitive exam subject wise practice book"},
+  {title:"Mock test book",why:"Use timed mocks once most of the syllabus is covered.",search:"competitive exam mock test book"}
+ ]
+};
+
+function plannerExamType(){return document.getElementById("plannerExamType")?.value||db.plannerProfile?.examType||"NEET"}
+function plannerSyllabusRemaining(){
+ const total=db.chapters.length;
+ if(total){
+  const mastered=db.chapters.filter(c=>c.status==="mastered").length;
+  return Math.max(0,Math.min(100,Math.round((total-mastered)/total*100)));
+ }
+ return Math.max(0,Math.min(100,+(document.getElementById("plannerSyllabus")?.value??db.plannerProfile?.manualSyllabusRemaining??50)));
 }
-buildPlan.onclick=buildPlan;
+function plannerDaysLeft(){
+ if(!db.exam?.date)return null;
+ return daysUntil(db.exam.date);
+}
+function questionTarget(type,days,remaining){
+ const d=Math.max(1,days??30), r=Math.max(0,Math.min(100,remaining));
+ const base={NEET:90,JEE:75,"MHT-CET":100,BOARD:35,CUET:80,OTHER:60}[type]||60;
+ let daily=base;
+ if(d<=7)daily*=1.55;
+ else if(d<=14)daily*=1.25;
+ if(r>=70)daily*=1.05;
+ else if(r<=25)daily*=1.15;
+ return Math.max(20,Math.round(daily/5)*5);
+}
+function buildRoutine(){
+ const type=plannerExamType();
+ const remaining=plannerSyllabusRemaining();
+ const days=plannerDaysLeft();
+ const hours=Math.max(.5,Math.min(16,+(document.getElementById("availableHours")?.value||6)));
+ const daysSafe=days===null?30:Math.max(1,days);
+ const urgency=daysSafe<=7?"Final week":daysSafe<=14?"High":daysSafe<=30?"Moderate":"Long runway";
+ const q=questionTarget(type,daysSafe,remaining);
+
+ let learningPct,practicePct,revisionPct;
+ if(daysSafe<=7){learningPct=remaining>40?25:15;practicePct=50;revisionPct=25}
+ else if(daysSafe<=14){learningPct=remaining>40?40:25;practicePct=40;revisionPct=20}
+ else if(daysSafe<=30){learningPct=remaining>40?55:40;practicePct=30;revisionPct=15}
+ else {learningPct=remaining>50?65:50;practicePct=20;revisionPct=15}
+
+ const learnMin=Math.round(hours*60*learningPct/100/5)*5;
+ const practiceMin=Math.round(hours*60*practicePct/100/5)*5;
+ const revisionMin=Math.max(5,Math.round(hours*60*revisionPct/100/5)*5);
+
+ document.getElementById("smartPlanSummary").innerHTML=`
+  <div class="row"><div><b>${esc(type)}</b> • ${esc(urgency)}</div><b>${days===null?"Set exam date":daysSafe+" days left"}</b></div>
+  <div class="muted" style="margin-top:6px">${remaining}% syllabus remaining • ${hours}h/day available</div>
+  <div class="metric-grid" style="margin-top:10px">
+   <div class="metric"><b>${learnMin}m</b><span class="muted">new/unfinished syllabus</span></div>
+   <div class="metric"><b>${practiceMin}m</b><span class="muted">question practice</span></div>
+   <div class="metric"><b>${revisionMin}m</b><span class="muted">revision</span></div>
+   <div class="metric"><b>${q}/day</b><span class="muted">question target</span></div>
+  </div>`;
+
+ renderBooks(type);
+
+ if(!db.exam?.date){
+  document.getElementById("planResult").innerHTML='<div class="notice" style="margin-top:14px">Set an exam name and date first. Then Studyflow can calculate the exact countdown and adjust the routine.</div>';
+  return;
+ }
+
+ const planDate=new Date();
+ let rows=[];
+ for(let i=0;i<Math.min(daysSafe,14);i++){
+  const d=new Date(planDate);d.setDate(d.getDate()+i);
+  const date=dayKey(d);
+  const phase=i===0?"Today":i<daysSafe-2?"Build":i===daysSafe-2?"Final revision":"Exam day";
+  let lp=learnMin,pp=practiceMin,rp=revisionMin;
+  if(i>=Math.max(0,daysSafe-3)){lp=Math.max(0,Math.round(lp*.55/5)*5);pp=Math.round((hours*60-lp-rp)/5)*5}
+  if(i===daysSafe-1){lp=0;pp=Math.round(hours*60*.45/5)*5;rp=Math.round(hours*60*.55/5)*5}
+  if(i>=daysSafe)break;
+  rows.push(`<div class="plan-item"><div class="plan-num">${i+1}</div><div style="flex:1"><b>${esc(date)} • ${phase}</b><div class="muted">Learn ${lp}m • Practice ${pp}m • Revise ${rp}m • ~${q} questions</div></div></div>`);
+ }
+ document.getElementById("planResult").innerHTML=`
+  <div style="margin-top:14px">
+   <div class="section-title">Next ${Math.min(daysSafe,14)} days</div>
+   ${rows.join("")}
+  </div>
+  <div class="notice" style="margin-top:12px">This is a starting routine, not a guarantee. If your actual study time is lower, the plan will remain realistic rather than telling you to study an impossible number of hours.</div>`;
+}
+
+function renderBooks(type){
+ const items=BOOKS[type]||BOOKS.OTHER;
+ const box=document.getElementById("bookRecommendations");
+ if(!box)return;
+ box.innerHTML=items.map((b,i)=>`
+  <div class="plan-item">
+   <div class="plan-num">${i+1}</div>
+   <div style="flex:1">
+    <b>${esc(b.title)}</b>
+    <div class="muted">${esc(b.why)}</div>
+    <a class="btn mini" target="_blank" rel="noopener noreferrer"
+       href="https://www.amazon.in/s?k=${encodeURIComponent(b.search)}">View book options</a>
+   </div>
+  </div>
+ `).join("")+`<div class="muted" style="font-size:12px;margin-top:10px">Book links are currently standard search links. Commission only applies after the site is connected to an approved affiliate program and its official affiliate links.</div>`;
+}
+
+function savePlannerProfile(){
+ db.plannerProfile=db.plannerProfile||{};
+ db.plannerProfile.examType=plannerExamType();
+ db.plannerProfile.manualSyllabusRemaining=Math.max(0,Math.min(100,+(document.getElementById("plannerSyllabus")?.value||50)));
+ save();buildRoutine();showToast("Planner settings saved");
+}
+function buildPlan(){buildRoutine()}
+
+function initSmartPlanner(){
+ if(window.__smartPlannerInitialized)return;
+ window.__smartPlannerInitialized=true;
+ const type=document.getElementById("plannerExamType");
+ const syl=document.getElementById("plannerSyllabus");
+ if(type)type.value=db.plannerProfile?.examType||"NEET";
+ if(syl)syl.value=plannerSyllabusRemaining();
+ ["plannerExamType","plannerSyllabus","availableHours","priority"].forEach(id=>{
+  document.getElementById(id)?.addEventListener("input",()=>{if(id!=="availableHours"&&id!=="priority")buildRoutine()});
+  document.getElementById(id)?.addEventListener("change",()=>buildRoutine());
+ });
+ document.getElementById("buildPlan")?.addEventListener("click",buildRoutine);
+ document.getElementById("savePlannerProfile")?.addEventListener("click",savePlannerProfile);
+ buildRoutine();
+}
+initSmartPlanner();
 
 function timerLabel(){const m=Math.floor(timer.remaining/60),s=timer.remaining%60;return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`}
 function updateTimerUI(){timerDisplay.textContent=timerLabel();timerState.textContent=timer.running?(timer.mode==="focus"?"Focus in progress":"Break in progress"):(timer.mode==="focus"?"Ready to focus":"Break ready");timerStart.textContent=timer.running?"Pause":"Start";document.querySelectorAll(".preset").forEach(p=>p.classList.toggle("active",+p.dataset.focus===timer.focusMin))}
