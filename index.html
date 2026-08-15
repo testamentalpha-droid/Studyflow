@@ -120,12 +120,35 @@ body.dark .metric-grid .metric{min-height:82px}
 
 
 .auth-required{max-width:560px;margin:80px auto;text-align:center}.auth-required .card{padding:28px}
+
+/* StudyProgress Books Store */
+.books-store{overflow:hidden}.books-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.books-search-wrap{position:relative;margin-top:16px}.books-search-wrap input{width:100%;height:48px;padding:0 16px 0 45px;border:1px solid var(--line);border-radius:13px;font-size:14px;box-sizing:border-box}
+.books-search-icon{position:absolute;left:16px;top:11px;font-size:25px;line-height:25px;color:var(--muted);z-index:1}
+.books-controls{margin-top:14px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.books-chips{display:flex;gap:7px;overflow:auto;padding-bottom:2px}
+.book-chip{border:1px solid var(--line);background:var(--card);color:var(--muted);padding:8px 12px;border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap;cursor:pointer}.book-chip.active{background:#ebe9ff;color:#5b4dd7;border-color:#cfc9ff}
+.books-selects{display:flex;gap:8px;flex-wrap:wrap}.books-selects select{min-width:120px;height:38px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);padding:0 10px}
+.books-count{margin-top:16px;color:var(--muted);font-size:12px;font-weight:700}.books-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:12px}
+.book-card{position:relative;display:flex;flex-direction:column;min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:15px;background:var(--card);box-shadow:var(--shadow)}
+.book-cover{height:180px;display:flex;align-items:flex-end;padding:14px;position:relative;overflow:hidden;background:linear-gradient(145deg,#f1efff,#e8f1ff)}
+.book-cover::after{content:"";position:absolute;width:85px;height:130px;right:-18px;top:-28px;border-radius:50%;background:rgba(255,255,255,.55);transform:rotate(18deg)}
+.book-cover .cover-book{position:relative;z-index:1;width:78%;min-height:126px;border-radius:3px 8px 8px 3px;background:linear-gradient(150deg,#6d5dfc,#3e35a4);box-shadow:8px 9px 16px rgba(0,0,0,.2);padding:12px;color:#fff;display:flex;flex-direction:column;justify-content:space-between}
+.book-cover .cover-book b{font-size:13px;line-height:1.2}.book-cover .cover-book span{font-size:9px;font-weight:800;opacity:.9}
+.book-badge{position:absolute;left:9px;top:9px;z-index:2;background:#6d5dfc;color:#fff;border-radius:6px;padding:5px 8px;font-size:10px;font-weight:900}
+.book-body{padding:12px;display:flex;flex-direction:column;gap:7px;flex:1}.book-title{font-size:14px;font-weight:850;line-height:1.35}.book-meta{display:flex;gap:6px;flex-wrap:wrap}
+.book-meta span{font-size:10px;font-weight:800;border-radius:999px;background:#f0f1f5;color:#687186;padding:4px 7px}.book-why{font-size:11px;line-height:1.45;color:var(--muted);min-height:32px}.book-actions{margin-top:auto;padding-top:4px}.book-actions a{width:100%;box-sizing:border-box;justify-content:center;text-decoration:none}
+body.dark .book-chip{background:#172136;color:#9aa6bd;border-color:#2a3853}body.dark .book-chip.active{background:#29234f;color:#c9c3ff;border-color:#4a4380}
+body.dark .books-selects select{background:#0f1728;color:var(--ink)}body.dark .book-meta span{background:#1a2438;color:#9aa6bd}
+@media(max-width:1000px){.books-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){.books-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.book-cover{height:155px}.book-cover .cover-book{min-height:110px;width:80%}.books-controls{align-items:stretch}.books-chips{width:100%}.books-selects{width:100%}.books-selects select{flex:1;min-width:0}.books-search-wrap input{height:46px}}
+@media(max-width:430px){.books-grid{grid-template-columns:1fr 1fr}.book-title{font-size:13px}.book-cover{height:140px}.book-cover .cover-book{min-height:100px;padding:9px}.book-cover .cover-book b{font-size:11px}}
+
 </style>
 </head>
 <body>
 <div class="app">
 <header>
- <div class="brand"><div class="logo">S</div><div><h1>Study Progress <span class="version-badge">v5.0</span></h1><small>Student dashboard</small></div></div>
+ <div class="brand"><div class="logo">S</div><div><h1>Study Progress <span class="version-badge">v6.0</span></h1><small>Student dashboard</small></div></div>
  <div class="top-actions"><button class="btn theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode"><span class="theme-icon">🌙</span><span class="theme-label">Dark mode</span></button><button class="btn" id="quickAdd">Quick add</button><button class="btn primary" id="loginBtn">Login</button></div>
 </header>
 
@@ -133,6 +156,7 @@ body.dark .metric-grid .metric{min-height:82px}
  <button class="tab active" data-page="dashboard">Dashboard</button>
  <button class="tab" data-page="subjects">Subjects</button>
  <button class="tab" data-page="planner">Planner</button>
+ <button class="tab" data-page="books">Books</button>
  <button class="tab" data-page="analytics">Analytics</button>
  <button class="tab" data-page="syllabus">Syllabus</button>
  <button class="tab" data-page="calendar">Calendar</button>
@@ -292,6 +316,28 @@ body.dark .metric-grid .metric{min-height:82px}
  </div>
 </section>
 
+
+
+<section class="page" id="books">
+ <div class="card books-store">
+  <div class="books-head">
+   <div><div class="section-title" style="font-size:24px">Recommended Books</div><div class="muted">Study resources selected for your exam preparation.</div></div>
+  </div>
+  <div class="books-search-wrap"><span class="books-search-icon">⌕</span><input id="booksSearch" type="search" placeholder="Search books, subjects or topics..." autocomplete="off"></div>
+  <div class="books-controls">
+   <div class="books-chips" id="booksCategoryChips">
+    <button class="book-chip active" data-book-category="ALL">All Books</button><button class="book-chip" data-book-category="NCERT">NCERT</button><button class="book-chip" data-book-category="PYQ">PYQ</button><button class="book-chip" data-book-category="PRACTICE">Practice</button><button class="book-chip" data-book-category="REFERENCE">Reference</button>
+   </div>
+   <div class="books-selects">
+    <select id="booksExam"><option value="ALL">All Exams</option><option value="NEET">NEET UG</option><option value="JEE">JEE Main / Advanced</option><option value="MHT-CET">MHT-CET</option><option value="BOARD">Board Exams</option><option value="CUET">CUET</option><option value="OTHER">Other</option></select>
+    <select id="booksSubject"><option value="ALL">All Subjects</option></select>
+    <select id="booksSort"><option value="latest">Latest</option><option value="az">A–Z</option><option value="subject">Subject</option></select>
+   </div>
+  </div>
+  <div class="books-count" id="booksCount"></div>
+  <div class="books-grid" id="booksGrid"></div>
+ </div>
+</section>
 
 <section class="page" id="admin">
  <div class="card" style="margin-bottom:16px">
@@ -1036,7 +1082,7 @@ async function cloudRefreshBooks(){
  const {data,error}=await window.studyflowSupabase.from("book_catalog").select("*").order("created_at",{ascending:false});
  if(error){showToast(error.message);return}
  db.bookCatalog=(data||[]).map(x=>({id:x.id,exam:x.exam,subject:x.subject,title:x.title,why:x.why,productUrl:x.product_url,affiliateUrl:x.affiliate_url}));
- localStorage.setItem(KEY,JSON.stringify(db)); renderAdminBooks(); renderBooks(plannerExamType());
+ localStorage.setItem(KEY,JSON.stringify(db)); renderAdminBooks(); renderBooks(plannerExamType()); window.renderStudyProgressBooks?.();
 }
 
 function initBookAdmin(){
@@ -1159,7 +1205,20 @@ function resetAllStudyData(){
  db=structuredClone(defaultDB); save(); closeModal(); render(); showToast("Study data reset");
 }
 
-document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".page").forEach(x=>x.classList.toggle("active",x.id===b.dataset.page));if(b.dataset.page==="analytics")renderAnalytics();if(b.dataset.page==="syllabus")renderSyllabus();if(b.dataset.page==="calendar")renderCalendar();if(b.dataset.page==="review")renderReview()});
+
+/* StudyProgress Books tab — reads the existing Supabase book_catalog; authentication is untouched. */
+(function(){
+ const state={category:"ALL",search:"",exam:"ALL",subject:"ALL",sort:"latest"};
+ function cat(b){const s=((b.title||"")+" "+(b.subject||"")+" "+(b.why||"")).toUpperCase();if(s.includes("NCERT"))return"NCERT";if(s.includes("PYQ")||s.includes("PREVIOUS YEAR"))return"PYQ";if(s.includes("PRACTICE")||s.includes("OBJECTIVE")||s.includes("QUESTION BANK")||s.includes("MCQ"))return"PRACTICE";if(s.includes("REFERENCE")||s.includes("MODULE")||s.includes("HANDBOOK"))return"REFERENCE";return"OTHER"}
+ function tone(subject){const s=(subject||"").toUpperCase();if(s.includes("BIO"))return"linear-gradient(150deg,#168b63,#0b5a43)";if(s.includes("CHEM"))return"linear-gradient(150deg,#e89b23,#9a5d0a)";if(s.includes("PHYS"))return"linear-gradient(150deg,#3f76c8,#24427a)";return"linear-gradient(150deg,#6d5dfc,#3e35a4)"}
+ function escA(v){return esc(String(v||"")).replace(/`/g,"&#96;")}
+ function subjects(){const el=document.getElementById("booksSubject");if(!el)return;const cur=el.value;const a=[...new Set((db.bookCatalog||[]).map(b=>(b.subject||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));el.innerHTML='<option value="ALL">All Subjects</option>'+a.map(s=>`<option value="${escA(s)}">${esc(s)}</option>`).join("");el.value=a.includes(cur)?cur:"ALL";state.subject=el.value}
+ window.renderStudyProgressBooks=function(){const grid=document.getElementById("booksGrid"),count=document.getElementById("booksCount");if(!grid||!count)return;subjects();let a=[...(db.bookCatalog||[])];if(state.exam!=="ALL")a=a.filter(b=>b.exam===state.exam);if(state.subject!=="ALL")a=a.filter(b=>(b.subject||"")===state.subject);if(state.category!=="ALL")a=a.filter(b=>cat(b)===state.category);if(state.search){const q=state.search.toLowerCase();a=a.filter(b=>`${b.title||""} ${b.subject||""} ${b.why||""} ${b.exam||""}`.toLowerCase().includes(q))}if(state.sort==="az")a.sort((x,y)=>(x.title||"").localeCompare(y.title||""));if(state.sort==="subject")a.sort((x,y)=>(x.subject||"").localeCompare(y.subject||"")||(x.title||"").localeCompare(y.title||""));count.textContent=`Showing ${a.length} book${a.length===1?"":"s"}`;if(!a.length){grid.innerHTML='<div class="notice" style="grid-column:1/-1">No books match these filters. Add books from Admin or change your filters.</div>';return}grid.innerHTML=a.map((b,i)=>{const href=b.affiliateUrl||b.productUrl||`https://www.amazon.in/s?k=${encodeURIComponent(b.title||"study books")}`,c=cat(b),badge=c==="OTHER"?(i<3?"Recommended":"Suggested"):c,title=esc(b.title||"Recommended book"),sub=esc(b.subject||"General"),exam=esc(b.exam||"OTHER"),why=esc(b.why||"Useful study resource for your preparation.");return `<article class="book-card"><div class="book-cover" style="background:${tone(b.subject)}"><span class="book-badge">${badge}</span><div class="cover-book"><b>${title}</b><span>${sub} • ${exam}</span></div></div><div class="book-body"><div class="book-title">${title}</div><div class="book-meta"><span>${sub}</span><span>${exam}</span></div><div class="book-why">${why}</div><div class="book-actions"><a class="btn primary mini" target="_blank" rel="noopener noreferrer" href="${escA(href)}">View book</a></div></div></article>`}).join("")}
+ function bind(){document.getElementById("booksSearch")?.addEventListener("input",e=>{state.search=e.target.value.trim();renderStudyProgressBooks()});document.getElementById("booksExam")?.addEventListener("change",e=>{state.exam=e.target.value;state.subject="ALL";renderStudyProgressBooks()});document.getElementById("booksSubject")?.addEventListener("change",e=>{state.subject=e.target.value;renderStudyProgressBooks()});document.getElementById("booksSort")?.addEventListener("change",e=>{state.sort=e.target.value;renderStudyProgressBooks()});document.querySelectorAll("[data-book-category]").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll("[data-book-category]").forEach(x=>x.classList.remove("active"));b.classList.add("active");state.category=b.dataset.bookCategory;renderStudyProgressBooks()}))}
+ bind();
+})();
+
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".page").forEach(x=>x.classList.toggle("active",x.id===b.dataset.page));if(b.dataset.page==="analytics")renderAnalytics();if(b.dataset.page==="syllabus")renderSyllabus();if(b.dataset.page==="calendar")renderCalendar();if(b.dataset.page==="review")renderReview();if(b.dataset.page==="books")window.renderStudyProgressBooks?.()});
 
 document.getElementById("twoHourBtn").onclick=quickTwoHours;
 document.getElementById("examEdit").onclick=editExam;
