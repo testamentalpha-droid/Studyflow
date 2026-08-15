@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#6d5dfc">
 <link rel="manifest" href="manifest.json">
-<title>StudyProgress</title>
+<title>Study Progress</title>
 <style>
 :root{
  --bg:#f6f7fb;--card:#fff;--ink:#182033;--muted:#788197;--line:#e7eaf1;
@@ -118,14 +118,13 @@ body.dark .metric-grid .metric{min-height:82px}
   .form-grid{grid-template-columns:1fr!important}
 }
 
-
-.auth-required{max-width:560px;margin:80px auto;text-align:center}.auth-required .card{padding:28px}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="app">
 <header>
- <div class="brand"><div class="logo">S</div><div><h1>Study Progress <span class="version-badge">v6.0</span></h1><small>Student dashboard</small></div></div>
+ <div class="brand"><div class="logo">S</div><div><h1>Study Progress <span class="version-badge">v3.1</span></h1><small>Student dashboard</small></div></div>
  <div class="top-actions"><button class="btn theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode"><span class="theme-icon">🌙</span><span class="theme-label">Dark mode</span></button><button class="btn" id="quickAdd">Quick add</button><button class="btn primary" id="loginBtn">Login</button></div>
 </header>
 
@@ -137,6 +136,7 @@ body.dark .metric-grid .metric{min-height:82px}
  <button class="tab" data-page="syllabus">Syllabus</button>
  <button class="tab" data-page="calendar">Calendar</button>
  <button class="tab" data-page="review">Review</button>
+ <button class="tab" data-page="admin">Admin</button>
 </div>
 
 <section class="page active" id="dashboard">
@@ -218,7 +218,7 @@ body.dark .metric-grid .metric{min-height:82px}
   <div class="row">
    <div>
     <div class="section-title">Smart exam planner</div>
-    <div class="muted">Tell StudyProgress what exam you are preparing for, how much syllabus remains, and how close the exam is. It turns that into a realistic daily routine.</div>
+    <div class="muted">Tell Studyflow what exam you are preparing for, how much syllabus remains, and how close the exam is. It turns that into a realistic daily routine.</div>
    </div>
    <span class="tag">SMART PLAN</span>
   </div>
@@ -238,7 +238,7 @@ body.dark .metric-grid .metric{min-height:82px}
    <div class="field">
     <label>Syllabus remaining (%)</label>
     <input id="plannerSyllabus" type="number" min="0" max="100" step="1" value="50">
-    <div class="muted" style="font-size:12px;margin-top:3px">If you have chapters in Syllabus, StudyProgress can calculate this automatically.</div>
+    <div class="muted" style="font-size:12px;margin-top:3px">If you have chapters in Syllabus, Studyflow can calculate this automatically.</div>
    </div>
    <div class="field">
     <label>Realistic study time / day (hours)</label>
@@ -275,12 +275,12 @@ body.dark .metric-grid .metric{min-height:82px}
   </div>
   <div class="card">
    <div class="section-title">Books & resources</div>
-   <p class="muted">StudyProgress can show exam-specific resources after you choose the exam type. Book buttons can later be connected to your approved affiliate links.</p>
+   <p class="muted">Studyflow can show exam-specific resources after you choose the exam type. Book buttons can later be connected to your approved affiliate links.</p>
    <div id="bookRecommendations"></div>
   </div>
  </div>
 
- <div class="card" style="margin-top:16px">
+ <div class="card" data-admin-content style="display:none;margin-top:16px">
   <div class="row">
    <div>
     <div class="section-title">Your study tasks</div>
@@ -294,13 +294,25 @@ body.dark .metric-grid .metric{min-height:82px}
 
 
 <section class="page" id="admin">
- <div class="card" style="margin-bottom:16px">
-  <div class="row"><div><div class="section-title">Admin access</div><div class="muted" id="adminIdentity">Checking account…</div></div><button class="btn" id="adminLogout">Sign out</button></div>
+
+<div class="card" data-admin-login style="margin-bottom:16px">
+ <div class="section-title">Admin sign in</div>
+ <p class="muted">Sign in with the admin account configured in Supabase.</p>
+ <div class="form-grid" style="margin-top:12px">
+  <div class="field"><label>Email</label><input id="onlineAdminEmail" type="email" autocomplete="username" placeholder="Admin email"></div>
+  <div class="field"><label>Password</label><input id="onlineAdminPassword" type="password" autocomplete="current-password" placeholder="Password"></div>
  </div>
- <div class="grid2">
+ <div class="actions">
+  <button class="btn primary" id="onlineAdminLogin">Sign in</button>
+  <button class="btn" id="onlineAdminLogout">Sign out</button>
+ </div>
+ <div id="onlineAdminStatus" class="muted" style="margin-top:8px"></div>
+</div>
+
+ <div class="grid2" data-admin-content style="display:none">
   <div class="card">
    <div class="section-title">Book Recommendations Admin</div>
-   <p class="muted">Add the books you want StudyProgress to recommend. Each book can have its own approved affiliate URL.</p>
+   <p class="muted">Add the books you want Studyflow to recommend. Each book can have its own approved affiliate URL.</p>
    <div class="notice" style="margin-top:12px">
     <b>Important:</b> Use only affiliate links issued by the retailer/affiliate program you are actually enrolled in. Never enter an account password, API secret, or payment information here.
    </div>
@@ -351,10 +363,10 @@ body.dark .metric-grid .metric{min-height:82px}
    <div class="section-title">How the system works</div>
    <div class="notice" style="margin-top:12px">
     <b>1. User selects exam</b><br>
-    StudyProgress identifies the relevant book category.<br><br>
+    Studyflow identifies the relevant book category.<br><br>
     <b>2. Planner reads the situation</b><br>
     Exam date, syllabus remaining, weak areas and question target affect recommendations.<br><br>
-    <b>3. StudyProgress recommends a resource</b><br>
+    <b>3. Studyflow recommends a resource</b><br>
     The user sees the book and why it is useful.<br><br>
     <b>4. User taps View book</b><br>
     The button uses your affiliate URL when one has been configured.<br><br>
@@ -368,7 +380,7 @@ body.dark .metric-grid .metric{min-height:82px}
   <div class="row">
    <div>
     <div class="section-title">Your custom book catalog</div>
-    <div class="muted">These books are stored in the online Supabase database and are available to authenticated StudyProgress users.</div>
+    <div class="muted">These are stored on this device in the current prototype.</div>
    </div>
    <span class="tag" id="adminBookCount">0 books</span>
   </div>
@@ -467,10 +479,7 @@ function load(){
   return {...structuredClone(defaultDB),...x,subjects:x.subjects||[],tasks:x.tasks||[],days:x.days||{},sessions:x.sessions||[],chapters:x.chapters||[],exam:x.exam||null,plannerProfile:{...structuredClone(defaultDB.plannerProfile),...(x.plannerProfile||{})}};
  }catch(e){return structuredClone(defaultDB)}
 }
-function save(){
- localStorage.setItem(KEY,JSON.stringify(db));
- if(window.studyprogressCloudReady && window.studyprogressUser) window.studyprogressCloudSave();
-}
+function save(){localStorage.setItem(KEY,JSON.stringify(db))}
 function fmtMin(min){min=Math.max(0,Math.round(min));const h=Math.floor(min/60),m=min%60;return h?`${h}h ${m?m+"m":""}`.trim():`${m}m`}
 function dayKey(d=new Date()){return d.toISOString().slice(0,10)}
 function dateKeys(){
@@ -840,7 +849,7 @@ function buildRoutine(){
  renderBooks(type);
 
  if(!db.exam?.date){
-  document.getElementById("planResult").innerHTML='<div class="notice" style="margin-top:14px">Set an exam name and date first. Then StudyProgress can calculate the exact countdown and adjust the routine.</div>';
+  document.getElementById("planResult").innerHTML='<div class="notice" style="margin-top:14px">Set an exam name and date first. Then Studyflow can calculate the exact countdown and adjust the routine.</div>';
   return;
  }
 
@@ -916,8 +925,7 @@ function renderAdminBooks(){
  `).join("");
 }
 
-async function addAdminBook(){
- if(!window.studyprogressIsAdmin){showToast("Admin access required");return}
+function addAdminBook(){
  const exam=document.getElementById("adminBookExam")?.value||"OTHER";
  const subject=document.getElementById("adminBookSubject")?.value.trim()||"General";
  const title=document.getElementById("adminBookTitle")?.value.trim();
@@ -925,41 +933,58 @@ async function addAdminBook(){
  const productUrl=document.getElementById("adminBookUrl")?.value.trim();
  const affiliateUrl=document.getElementById("adminBookAffiliate")?.value.trim();
  if(!title){showToast("Enter a book name");return}
- if(!window.studyprogressSupabase||!window.studyprogressUser){showToast("Admin account is not connected");return}
- const {error}=await window.studyprogressSupabase.from("book_catalog").insert({exam,subject,title,why,product_url:productUrl||null,affiliate_url:affiliateUrl||null});
- if(error){showToast(error.message);return}
- ["adminBookSubject","adminBookTitle","adminBookWhy","adminBookUrl","adminBookAffiliate"].forEach(id=>{const e=document.getElementById(id);if(e)e.value=""});
- await cloudRefreshBooks(); showToast("Book added online")
+ if(affiliateUrl && !/^https?:\/\//i.test(affiliateUrl)){showToast("Affiliate URL must start with https:// or http://");return}
+ if(productUrl && !/^https?:\/\//i.test(productUrl)){showToast("Product URL must start with https:// or http://");return}
+ db.bookCatalog.push({id:crypto.randomUUID(),exam,subject,title,why,
+   productUrl,affiliateUrl});
+ save();renderAdminBooks();renderBooks(plannerExamType());
+ ["adminBookSubject","adminBookTitle","adminBookWhy","adminBookUrl","adminBookAffiliate"].forEach(id=>{
+   const el=document.getElementById(id);if(el)el.value="";
+ });
+ showToast("Book recommendation added");
 }
 
 function editAdminBook(id){
- if(!window.studyprogressIsAdmin){showToast("Admin access required");return}
  const b=(db.bookCatalog||[]).find(x=>x.id===id);if(!b)return;
- openModal("Edit book",`<div class="form-grid"><div class="field"><label>Exam</label><input id="editBookExam" value="${esc(b.exam)}"></div><div class="field"><label>Subject</label><input id="editBookSubject" value="${esc(b.subject)}"></div><div class="field"><label>Book</label><input id="editBookTitle" value="${esc(b.title)}"></div><div class="field"><label>Why</label><input id="editBookWhy" value="${esc(b.why||"")}"></div><div class="field"><label>Product URL</label><input id="editBookUrl" value="${esc(b.productUrl||"")}"></div><div class="field"><label>Affiliate URL</label><input id="editBookAffiliate" value="${esc(b.affiliateUrl||"")}"></div></div><div class="actions"><button class="btn primary" onclick="saveAdminBook('${id}')">Save</button></div>`)
+ openModal("Edit book recommendation",`
+  <div class="field"><label>Exam</label><select id="editBookExam">
+   ${["NEET","JEE","MHT-CET","BOARD","CUET","OTHER"].map(x=>`<option value="${x}" ${b.exam===x?"selected":""}>${x}</option>`).join("")}
+  </select></div>
+  <div class="field"><label>Subject</label><input id="editBookSubject" value="${esc(b.subject||"")}"></div>
+  <div class="field"><label>Book name</label><input id="editBookTitle" value="${esc(b.title||"")}"></div>
+  <div class="field"><label>Why recommend it</label><input id="editBookWhy" value="${esc(b.why||"")}"></div>
+  <div class="field"><label>Product URL</label><input id="editBookUrl" type="url" value="${esc(b.productUrl||"")}"></div>
+  <div class="field"><label>Affiliate URL</label><input id="editBookAffiliate" type="url" value="${esc(b.affiliateUrl||"")}"></div>
+  <div class="actions">
+   <button class="btn primary" onclick="saveAdminBook('${id}')">Save</button>
+  </div>
+ `);
 }
 
-async function saveAdminBook(id){
- if(!window.studyprogressIsAdmin)return;
+function saveAdminBook(id){
+ const b=(db.bookCatalog||[]).find(x=>x.id===id);if(!b)return;
  const au=document.getElementById("editBookAffiliate")?.value.trim()||"";
  const pu=document.getElementById("editBookUrl")?.value.trim()||"";
  if(au && !/^https?:\/\//i.test(au)){showToast("Affiliate URL must start with https:// or http://");return}
  if(pu && !/^https?:\/\//i.test(pu)){showToast("Product URL must start with https:// or http://");return}
- const payload={exam:document.getElementById("editBookExam")?.value||"OTHER",subject:document.getElementById("editBookSubject")?.value.trim()||"General",title:document.getElementById("editBookTitle")?.value.trim()||"Book",why:document.getElementById("editBookWhy")?.value.trim()||"",product_url:pu||null,affiliate_url:au||null};
- const {error}=await window.studyprogressSupabase.from("book_catalog").update(payload).eq("id",id);
- if(error){showToast(error.message);return}
- closeModal();await cloudRefreshBooks();showToast("Book recommendation updated online");
+ b.exam=document.getElementById("editBookExam").value;
+ b.subject=document.getElementById("editBookSubject").value.trim()||"General";
+ b.title=document.getElementById("editBookTitle").value.trim()||b.title;
+ b.why=document.getElementById("editBookWhy").value.trim();
+ b.productUrl=pu;b.affiliateUrl=au;
+ save();closeModal();renderAdminBooks();renderBooks(plannerExamType());showToast("Book recommendation updated");
 }
 
-async function deleteAdminBook(id){
- if(!window.studyprogressIsAdmin)return;if(!confirm("Delete this book from the online catalog?"))return;
- const {error}=await window.studyprogressSupabase.from("book_catalog").delete().eq("id",id);if(error){showToast(error.message);return}await cloudRefreshBooks();showToast("Book deleted")
+function deleteAdminBook(id){
+ if(!confirm("Delete this book recommendation?"))return;
+ db.bookCatalog=(db.bookCatalog||[]).filter(x=>x.id!==id);
+ save();renderAdminBooks();renderBooks(plannerExamType());showToast("Book deleted");
 }
 
-async function clearAdminBooks(){
- if(!window.studyprogressIsAdmin)return;if(!confirm("Delete ALL books from the online catalog?"))return;
- const {data,error}=await window.studyprogressSupabase.from("book_catalog").select("id");if(error){showToast(error.message);return}
- if(data?.length){const {error:e}=await window.studyprogressSupabase.from("book_catalog").delete().in("id",data.map(x=>x.id));if(e){showToast(e.message);return}}
- await cloudRefreshBooks();showToast("Online catalog cleared")
+function clearAdminBooks(){
+ if(!(db.bookCatalog||[]).length){showToast("No custom books to clear");return}
+ if(!confirm("Delete all custom book recommendations on this device?"))return;
+ db.bookCatalog=[];save();renderAdminBooks();renderBooks(plannerExamType());showToast("Custom catalog cleared");
 }
 
 
@@ -973,7 +998,7 @@ function exportBookCsv(){
  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
  const a=document.createElement("a");
  a.href=URL.createObjectURL(blob);
- a.download="studyprogress-book-catalog.csv";
+ a.download="studyflow-book-catalog.csv";
  document.body.appendChild(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(a.href),500);
  showToast("Book catalog exported");
@@ -990,9 +1015,9 @@ function parseCsvLine(line){
  }
  out.push(cur);return out;
 }
-async function importBookCsv(file){
+function importBookCsv(file){
  const reader=new FileReader();
- reader.onload=async()=>{
+ reader.onload=()=>{
   try{
    const lines=String(reader.result||"").replace(/^\uFEFF/,"").split(/\r?\n/).filter(x=>x.trim());
    if(lines.length<2){showToast("CSV has no book rows");return}
@@ -1020,23 +1045,12 @@ async function importBookCsv(file){
     });
    }
    if(!imported.length){showToast("No valid book rows found");return}
-   if(!window.studyprogressIsAdmin||!window.studyprogressSupabase){showToast("Admin access required");return}
-   const rows=imported.map(b=>({exam:b.exam,subject:b.subject,title:b.title,why:b.why,product_url:b.productUrl||null,affiliate_url:b.affiliateUrl||null}));
-   const {error}=await window.studyprogressSupabase.from("book_catalog").insert(rows);
-   if(error){showToast(error.message);return}
-   await cloudRefreshBooks();
+   db.bookCatalog=[...(db.bookCatalog||[]),...imported];
+   save();renderAdminBooks();renderBooks(plannerExamType());
    showToast(`Imported ${imported.length} book${imported.length===1?"":"s"}`);
   }catch(e){showToast("Could not read that CSV")}
  };
  reader.readAsText(file);
-}
-
-async function cloudRefreshBooks(){
- if(!window.studyprogressSupabase)return;
- const {data,error}=await window.studyprogressSupabase.from("book_catalog").select("*").order("created_at",{ascending:false});
- if(error){showToast(error.message);return}
- db.bookCatalog=(data||[]).map(x=>({id:x.id,exam:x.exam,subject:x.subject,title:x.title,why:x.why,productUrl:x.product_url,affiliateUrl:x.affiliate_url}));
- localStorage.setItem(KEY,JSON.stringify(db)); renderAdminBooks(); renderBooks(plannerExamType());
 }
 
 function initBookAdmin(){
@@ -1119,45 +1133,10 @@ window.addEventListener("beforeunload",()=>{if(timer.running){timer.remaining=Ma
 function restoreTimer(){try{const x=JSON.parse(localStorage.getItem("studyProgressTimerRuntime")||"null");if(!x)return;localStorage.removeItem("studyProgressTimerRuntime");if(x.running&&x.endAt>Date.now()){timer={...timer,...x};timer.remaining=Math.ceil((timer.endAt-Date.now())/1000);timer.running=true;timerInterval=setInterval(timerTick,250)}else if(x.running&&x.endAt<=Date.now()){timer={...timer,...x,remaining:0};finishTimer()}}catch(e){}updateTimerUI()}
 restoreTimer();
 
-function updateLogin(){
- loginBtn.textContent=window.studyprogressUser ? (window.studyprogressIsAdmin ? "Admin" : (db.username?"@"+db.username:"Account")) : "Login";
-}
-function authModal(){
- const u=window.studyprogressUser;
- if(u){
-  openModal(window.studyprogressIsAdmin?"Admin account":"Your account",`<div class="notice"><b>${esc(u.email||"")}</b><br>${window.studyprogressIsAdmin?"Administrator access enabled.":"Study data is synced securely to your StudyProgress account."}</div><div class="actions"><button class="btn" onclick="studyprogressSignOut()">Sign out</button><button class="btn danger" onclick="resetAllStudyData()">Reset my study data</button></div>`);
-  return;
- }
- openModal("StudyProgress login",`<div class="notice">Sign in to sync your study data across devices. Your account also determines whether you have Admin access.</div><div class="form-grid" style="margin-top:12px"><div class="field"><label>Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></div><div class="field"><label>Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Password"></div></div><div id="authStatus" class="muted" style="margin-top:10px"></div><div class="actions"><button class="btn primary" onclick="studyprogressSignIn()">Sign in</button><button class="btn" onclick="studyprogressSignUp()">Create account</button></div>`)
-}
-loginBtn.onclick=authModal;
-async function studyprogressSignIn(){
- const email=document.getElementById("authEmail")?.value.trim(), password=document.getElementById("authPassword")?.value;
- const status=document.getElementById("authStatus"); if(!email||!password){status.textContent="Enter your email and password.";return}
- if(!window.studyprogressSupabase){status.textContent="Supabase is not configured yet.";return}
- status.textContent="Signing in…";
- const {error}=await window.studyprogressSupabase.auth.signInWithPassword({email,password});
- if(error){status.textContent=error.message;return}
- closeModal();
-}
-async function studyprogressSignUp(){
- const email=document.getElementById("authEmail")?.value.trim(), password=document.getElementById("authPassword")?.value;
- const status=document.getElementById("authStatus"); if(!email||!password){status.textContent="Enter your email and password.";return}
- if(password.length<6){status.textContent="Password must be at least 6 characters.";return}
- if(!window.studyprogressSupabase){status.textContent="Supabase is not configured yet.";return}
- status.textContent="Creating account…";
- const {data,error}=await window.studyprogressSupabase.auth.signUp({email,password});
- if(error){status.textContent=error.message;return}
- if(data.session){closeModal()} else status.textContent="Account created. Check your email if confirmation is enabled, then sign in.";
-}
-async function studyprogressSignOut(){
- if(window.studyprogressSupabase) await window.studyprogressSupabase.auth.signOut();
- closeModal();
-}
-function resetAllStudyData(){
- if(!confirm("Reset your StudyProgress study data? This removes your cloud study record for this account."))return;
- db=structuredClone(defaultDB); save(); closeModal(); render(); showToast("Study data reset");
-}
+function updateLogin(){loginBtn.textContent=db.username?("@"+db.username):"Login"}
+loginBtn.onclick=()=>openModal("Student profile",`<div class="notice">This prototype keeps your username and study records on this device. A production cloud account would need secure authentication and a clear privacy policy.</div><div class="field" style="margin-top:10px"><label>Username</label><input id="usernameInput" maxlength="30" value="${esc(db.username)}" placeholder="Choose a username"></div><div class="actions"><button class="btn danger" onclick="resetAllStudyData()">Reset study data</button><button class="btn primary" onclick="saveUsername()">Save profile</button></div>`)
+function saveUsername(){db.username=usernameInput.value.trim().replace(/\s+/g," ").slice(0,30);save();closeModal();render();showToast("Profile saved")}
+function resetAllStudyData(){if(!confirm("Reset all study data on this device?"))return;localStorage.removeItem(KEY);db=structuredClone(defaultDB);save();closeModal();render();showToast("Study data reset")}
 
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".page").forEach(x=>x.classList.toggle("active",x.id===b.dataset.page));if(b.dataset.page==="analytics")renderAnalytics();if(b.dataset.page==="syllabus")renderSyllabus();if(b.dataset.page==="calendar")renderCalendar();if(b.dataset.page==="review")renderReview()});
 
@@ -1218,34 +1197,116 @@ render();updateTimerUI();
 })();
 
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
-window.STUDYFLOW_CONFIG={url:"https://sdcdvnjffpunstosatdb.supabase.co",publishableKey:"sb_publishable_nnv6hfeji4jntytpkaF3dw_4V8dS5oC";
+/* Studyflow online Admin layer
+   Configure SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY after creating your project.
+   NEVER put a Supabase secret/service-role key in this file.
+*/
+window.STUDYFLOW_SUPABASE = {
+  url: window.STUDYFLOW_SUPABASE?.url || "PASTE_YOUR_SUPABASE_URL_HERE",
+  publishableKey: window.STUDYFLOW_SUPABASE?.publishableKey || "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE"
+};
+
 (function(){
- if(!window.supabase||STUDYFLOW_CONFIG.url.includes("PASTE_")||STUDYFLOW_CONFIG.publishableKey.includes("PASTE_"))return;
- const client=window.supabase.createClient(STUDYFLOW_CONFIG.url,STUDYFLOW_CONFIG.publishableKey);
- window.studyprogressSupabase=client;window.studyprogressUser=null;window.studyprogressIsAdmin=false;window.studyprogressCloudReady=false;
- async function getProfile(){const r=await client.from("profiles").select("is_admin").eq("id",window.studyprogressUser.id).maybeSingle();if(r.error)throw r.error;return r.data}
- async function loadCloud(){
-  const r=await client.from("study_data").select("data").eq("user_id",window.studyprogressUser.id).maybeSingle();if(r.error)throw r.error;
-  if(r.data?.data){const x=r.data.data;db={...structuredClone(defaultDB),...x,subjects:x.subjects||[],tasks:x.tasks||[],days:x.days||{},sessions:x.sessions||[],chapters:x.chapters||[],exam:x.exam||null,plannerProfile:{...structuredClone(defaultDB.plannerProfile),...(x.plannerProfile||{})},bookCatalog:db.bookCatalog||[]};}
-  else await client.from("study_data").upsert({user_id:window.studyprogressUser.id,data:db},{onConflict:"user_id"});
-  const b=await client.from("book_catalog").select("*").order("created_at",{ascending:false});
-  if(!b.error)db.bookCatalog=(b.data||[]).map(x=>({id:x.id,exam:x.exam,subject:x.subject,title:x.title,why:x.why,productUrl:x.product_url,affiliateUrl:x.affiliate_url}));
-  localStorage.setItem(KEY,JSON.stringify(db));window.studyprogressCloudReady=true;updateLogin();render();renderAdminBooks();
- }
- window.studyprogressCloudSave=async function(){if(!window.studyprogressUser)return;const r=await client.from("study_data").upsert({user_id:window.studyprogressUser.id,data:db,updated_at:new Date().toISOString()},{onConflict:"user_id"});if(r.error)console.error(r.error)};
- async function enter(user){
-  window.studyprogressUser=user;const p=await getProfile();window.studyprogressIsAdmin=!!p?.is_admin;
-  const tabs=document.querySelector('.tabs');
-  if(window.studyprogressIsAdmin&&!document.querySelector('[data-page="admin"]')){const b=document.createElement('button');b.className='tab';b.dataset.page='admin';b.textContent='Admin';tabs.appendChild(b);b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id==='admin'));renderAdminBooks()}}
-  if(!window.studyprogressIsAdmin)document.querySelector('[data-page="admin"]')?.remove();
-  await loadCloud();const a=document.getElementById('adminIdentity');if(a)a.textContent=window.studyprogressIsAdmin?`Signed in as ${user.email} • Administrator`:'Administrator only';
- }
- async function leave(){window.studyprogressUser=null;window.studyprogressIsAdmin=false;window.studyprogressCloudReady=false;document.querySelector('[data-page="admin"]')?.remove();document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id==='dashboard'));document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.page==='dashboard'));updateLogin()}
- client.auth.onAuthStateChange((event,session)=>setTimeout(async()=>{try{if(session?.user)await enter(session.user);else await leave()}catch(e){console.error(e);showToast('Account setup error')}},0));
- document.addEventListener('DOMContentLoaded',async()=>{try{const s=await client.auth.getSession();if(s.data.session?.user)await enter(s.data.session.user);else setTimeout(authModal,250)}catch(e){console.error(e)};document.getElementById('adminLogout')?.addEventListener('click',studyprogressSignOut)});
+  if(!window.supabase || !STUDYFLOW_SUPABASE.url || !STUDYFLOW_SUPABASE.publishableKey) return;
+
+  const client = window.supabase.createClient(
+    STUDYFLOW_SUPABASE.url,
+    STUDYFLOW_SUPABASE.publishableKey
+  );
+  window.studyflowSupabase = client;
+
+  async function getAdminUser(){
+    const {data:{user}} = await client.auth.getUser();
+    if(!user) return null;
+    const {data:profile,error} = await client
+      .from("profiles").select("is_admin").eq("id",user.id).maybeSingle();
+    if(error) throw error;
+    return profile?.is_admin ? user : null;
+  }
+
+  window.StudyflowOnline = {
+    async signIn(email,password){
+      return await client.auth.signInWithPassword({email,password});
+    },
+    async signOut(){
+      return await client.auth.signOut();
+    },
+    async currentAdmin(){
+      try{return await getAdminUser();}catch(e){console.error(e);return null;}
+    },
+    async listBooks(){
+      const {data,error}=await client.from("book_catalog")
+        .select("*").order("created_at",{ascending:false});
+      if(error) throw error;
+      return data||[];
+    },
+    async addBook(book){
+      const {data,error}=await client.from("book_catalog").insert(book).select().single();
+      if(error) throw error;
+      return data;
+    },
+    async updateBook(id,book){
+      const {data,error}=await client.from("book_catalog").update(book).eq("id",id).select().single();
+      if(error) throw error;
+      return data;
+    },
+    async deleteBook(id){
+      const {error}=await client.from("book_catalog").delete().eq("id",id);
+      if(error) throw error;
+    },
+    async importBooks(books){
+      const {data,error}=await client.from("book_catalog").insert(books).select();
+      if(error) throw error;
+      return data||[];
+    }
+  };
+
+  async function showOnlineAdmin(){
+    const admin=await StudyflowOnline.currentAdmin();
+    const page=document.getElementById("admin");
+    if(!page)return;
+    if(admin){
+      page.dataset.onlineAdmin="true";
+      page.querySelectorAll("[data-admin-login]").forEach(x=>x.style.display="none");
+      page.querySelectorAll("[data-admin-content]").forEach(x=>x.style.display="block");
+      try{
+        const books=await StudyflowOnline.listBooks();
+        window._onlineBooks=books;
+        const count=document.getElementById("adminBookCount");
+        if(count) count.textContent=`${books.length} online book${books.length===1?"":"s"}`;
+      }catch(e){console.error(e);}
+    }else{
+      page.dataset.onlineAdmin="false";
+    }
+  }
+
+
+  document.addEventListener("DOMContentLoaded",()=>{
+    const login=document.getElementById("onlineAdminLogin");
+    const logout=document.getElementById("onlineAdminLogout");
+    const status=document.getElementById("onlineAdminStatus");
+    login?.addEventListener("click",async()=>{
+      if(!window.StudyflowOnline){if(status)status.textContent="Supabase is not configured yet.";return;}
+      const email=document.getElementById("onlineAdminEmail")?.value.trim();
+      const password=document.getElementById("onlineAdminPassword")?.value;
+      if(!email||!password){if(status)status.textContent="Enter email and password.";return;}
+      const {error}=await StudyflowOnline.signIn(email,password);
+      if(status)status.textContent=error?error.message:"Signed in.";
+      if(!error) await showOnlineAdmin();
+    });
+    logout?.addEventListener("click",async()=>{
+      if(window.StudyflowOnline) await StudyflowOnline.signOut();
+      if(status)status.textContent="Signed out.";
+      await showOnlineAdmin();
+    });
+  });
+
+  document.addEventListener("DOMContentLoaded",showOnlineAdmin);
+  client.auth.onAuthStateChange(()=>showOnlineAdmin());
 })();
 </script>
+
 </body>
 </html>
