@@ -119,7 +119,6 @@ body.dark .metric-grid .metric{min-height:82px}
 }
 
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="app">
@@ -280,7 +279,7 @@ body.dark .metric-grid .metric{min-height:82px}
   </div>
  </div>
 
- <div class="card" data-admin-content style="display:none;margin-top:16px">
+ <div class="card" style="margin-top:16px">
   <div class="row">
    <div>
     <div class="section-title">Your study tasks</div>
@@ -294,22 +293,7 @@ body.dark .metric-grid .metric{min-height:82px}
 
 
 <section class="page" id="admin">
-
-<div class="card" data-admin-login style="margin-bottom:16px">
- <div class="section-title">Admin sign in</div>
- <p class="muted">Sign in with the admin account configured in Supabase.</p>
- <div class="form-grid" style="margin-top:12px">
-  <div class="field"><label>Email</label><input id="onlineAdminEmail" type="email" autocomplete="username" placeholder="Admin email"></div>
-  <div class="field"><label>Password</label><input id="onlineAdminPassword" type="password" autocomplete="current-password" placeholder="Password"></div>
- </div>
- <div class="actions">
-  <button class="btn primary" id="onlineAdminLogin">Sign in</button>
-  <button class="btn" id="onlineAdminLogout">Sign out</button>
- </div>
- <div id="onlineAdminStatus" class="muted" style="margin-top:8px"></div>
-</div>
-
- <div class="grid2" data-admin-content style="display:none">
+ <div class="grid2">
   <div class="card">
    <div class="section-title">Book Recommendations Admin</div>
    <p class="muted">Add the books you want Studyflow to recommend. Each book can have its own approved affiliate URL.</p>
@@ -1197,116 +1181,5 @@ render();updateTimerUI();
 })();
 
 </script>
-
-<script>
-/* Studyflow online Admin layer
-   Configure SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY after creating your project.
-   NEVER put a Supabase secret/service-role key in this file.
-*/
-window.STUDYFLOW_SUPABASE = {
-  url: window.STUDYFLOW_SUPABASE?.url || "PASTE_YOUR_SUPABASE_URL_HERE",
-  publishableKey: window.STUDYFLOW_SUPABASE?.publishableKey || "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE"
-};
-
-(function(){
-  if(!window.supabase || !STUDYFLOW_SUPABASE.url || !STUDYFLOW_SUPABASE.publishableKey) return;
-
-  const client = window.supabase.createClient(
-    STUDYFLOW_SUPABASE.url,
-    STUDYFLOW_SUPABASE.publishableKey
-  );
-  window.studyflowSupabase = client;
-
-  async function getAdminUser(){
-    const {data:{user}} = await client.auth.getUser();
-    if(!user) return null;
-    const {data:profile,error} = await client
-      .from("profiles").select("is_admin").eq("id",user.id).maybeSingle();
-    if(error) throw error;
-    return profile?.is_admin ? user : null;
-  }
-
-  window.StudyflowOnline = {
-    async signIn(email,password){
-      return await client.auth.signInWithPassword({email,password});
-    },
-    async signOut(){
-      return await client.auth.signOut();
-    },
-    async currentAdmin(){
-      try{return await getAdminUser();}catch(e){console.error(e);return null;}
-    },
-    async listBooks(){
-      const {data,error}=await client.from("book_catalog")
-        .select("*").order("created_at",{ascending:false});
-      if(error) throw error;
-      return data||[];
-    },
-    async addBook(book){
-      const {data,error}=await client.from("book_catalog").insert(book).select().single();
-      if(error) throw error;
-      return data;
-    },
-    async updateBook(id,book){
-      const {data,error}=await client.from("book_catalog").update(book).eq("id",id).select().single();
-      if(error) throw error;
-      return data;
-    },
-    async deleteBook(id){
-      const {error}=await client.from("book_catalog").delete().eq("id",id);
-      if(error) throw error;
-    },
-    async importBooks(books){
-      const {data,error}=await client.from("book_catalog").insert(books).select();
-      if(error) throw error;
-      return data||[];
-    }
-  };
-
-  async function showOnlineAdmin(){
-    const admin=await StudyflowOnline.currentAdmin();
-    const page=document.getElementById("admin");
-    if(!page)return;
-    if(admin){
-      page.dataset.onlineAdmin="true";
-      page.querySelectorAll("[data-admin-login]").forEach(x=>x.style.display="none");
-      page.querySelectorAll("[data-admin-content]").forEach(x=>x.style.display="block");
-      try{
-        const books=await StudyflowOnline.listBooks();
-        window._onlineBooks=books;
-        const count=document.getElementById("adminBookCount");
-        if(count) count.textContent=`${books.length} online book${books.length===1?"":"s"}`;
-      }catch(e){console.error(e);}
-    }else{
-      page.dataset.onlineAdmin="false";
-    }
-  }
-
-
-  document.addEventListener("DOMContentLoaded",()=>{
-    const login=document.getElementById("onlineAdminLogin");
-    const logout=document.getElementById("onlineAdminLogout");
-    const status=document.getElementById("onlineAdminStatus");
-    login?.addEventListener("click",async()=>{
-      if(!window.StudyflowOnline){if(status)status.textContent="Supabase is not configured yet.";return;}
-      const email=document.getElementById("onlineAdminEmail")?.value.trim();
-      const password=document.getElementById("onlineAdminPassword")?.value;
-      if(!email||!password){if(status)status.textContent="Enter email and password.";return;}
-      const {error}=await StudyflowOnline.signIn(email,password);
-      if(status)status.textContent=error?error.message:"Signed in.";
-      if(!error) await showOnlineAdmin();
-    });
-    logout?.addEventListener("click",async()=>{
-      if(window.StudyflowOnline) await StudyflowOnline.signOut();
-      if(status)status.textContent="Signed out.";
-      await showOnlineAdmin();
-    });
-  });
-
-  document.addEventListener("DOMContentLoaded",showOnlineAdmin);
-  client.auth.onAuthStateChange(()=>showOnlineAdmin());
-})();
-</script>
-
 </body>
 </html>
